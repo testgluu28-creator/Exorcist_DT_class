@@ -9,7 +9,7 @@
   --ground:#14171c; --panel:#1b1f26; --panel2:#232833; --hair:#2e3541;
   --ink:#d6dae1; --muted:#8b93a0;
   --combat:#b4553a; --hybrid:#7d6bb0; --support:#c8a44d;
-  --on:#e9edf3; --wire:#39414f; --wire-on:#c8a44d;
+  --on:#e9edf3; --wire:#39414f; --wire-on:#c8a44d; --orphan:#c9503c;
 }
 *{box-sizing:border-box} html,body{margin:0;height:100%}
 body{background:var(--ground);color:var(--ink);font-family:Barlow,system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
@@ -53,6 +53,8 @@ svg{display:block;margin:0 auto;touch-action:none}
 body.ids-on .nd .idlbl{display:block}
 body.tags-on .nd .tglbl{display:block}
 .nd.on .lbl{fill:var(--on)}
+.nd.orphan .bg{fill:#2b1614;stroke:var(--orphan);stroke-width:2.6}
+.nd.orphan .lbl{fill:#d98b7c}
 .nd.dim{opacity:.22}
 #inc{position:absolute;top:16px;left:16px;width:238px;background:#101319;border:1px solid var(--hair);
   border-radius:4px;padding:12px 14px 13px;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:6}
@@ -84,6 +86,7 @@ body.tags-on .nd .tglbl{display:block}
 .pickpop .opt.hi{background:#1c2129}
 .pickpop .opt.on{color:var(--support)}
 .pickpop .opt.none{color:var(--muted)}
+.pickpop .opt.tier{border-top:1px dotted #2b323d;margin-top:4px;padding-top:7px}
 #tip,#inctip{position:fixed;pointer-events:none;max-width:300px;background:#0f1216;border:1px solid var(--hair);
   border-left:3px solid var(--wire);padding:11px 13px;border-radius:3px;opacity:0;transition:opacity .1s;
   box-shadow:0 10px 30px rgba(0,0,0,.6);z-index:9}
@@ -103,6 +106,7 @@ body.tags-on .nd .tglbl{display:block}
 .tabs button.on{border-color:var(--support);color:var(--support);background:#20242c}
 .ver{display:inline-block;margin-left:6px;padding:1px 7px;border:1px solid var(--hair);border-radius:10px;
   font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.orphnote{font-size:12.5px;line-height:1.5;color:var(--orphan);margin:-12px 0 16px}
 .hint{font-size:12.5px;line-height:1.55;color:var(--muted)}
 .fld{display:block;margin:0 0 10px}
 .fld span{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11.5px;letter-spacing:.1em;
@@ -154,6 +158,7 @@ body.linking .handle{pointer-events:none}
   <div id="build-panel">
     <div class="budget"><b id="spent">0</b><span>of 30 points spent</span></div>
     <div class="bar"><i id="fill"></i></div>
+    <div class="orphnote" id="orph" hidden></div>
     <h2>Points by region</h2>
     <div class="row"><em><span class="swatch" style="background:var(--combat)"></span>Left &middot; combat</em><span id="r-combat">0</span></div>
     <div class="row"><em><span class="swatch" style="background:var(--support)"></span>Centre &middot; support</em><span id="r-support">0</span></div>
@@ -209,10 +214,12 @@ body.linking .handle{pointer-events:none}
     <label class="chk"><input type="checkbox" id="opt-ids" checked> Print the id above every node</label>
 
     <h2>Your copy of the tree</h2>
+    <div class="hint" style="margin-bottom:8px">These cover the tree's shape only. The build you picked and your
+      incantations live separately and are left alone.</div>
     <div class="hint" id="stat"></div>
     <button id="undo" class="mini">Undo last change</button>
-    <button id="exp" class="mini">Export to a file</button>
-    <button id="imp-btn" class="mini">Import from a file&hellip;</button>
+    <button id="exp" class="mini">Export the tree to a file</button>
+    <button id="imp-btn" class="mini">Import a tree from a file&hellip;</button>
     <input type="file" id="imp" accept=".json,application/json" hidden>
     <button id="wipe" class="mini">Reset to the built-in tree</button>
   </div>
@@ -250,31 +257,41 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const $ = id => document.getElementById(id);
 
 /* ------------------------------------------------------------------ *
- * Save file
+ * Save files
  *
- * Both the browser copy and the downloaded file use one envelope:
+ * There are two independent stores, each with its own localStorage key and its
+ * own downloadable envelope. Wiping one never touches the other:
  *
- *   { "format": "darktide.talent-page",   // never changes
- *     "version": 1,                       // envelope version
- *     "savedAt": "2026-01-01T00:00:00Z",
- *     "page": "Exorcist talent tree",
- *     "data": {
- *       "tree": { "version": 1, "nodes": [...], "edges": [...] }
- *       // every future feature adds its own key here, with its own version
- *     } }
+ *   tree  — "darktide.talent-page"   the shape of the tree itself
+ *            { "format": ..., "version": 1, "savedAt": ..., "build": "0.7",
+ *              "data": { "tree": { "version": 2, "nodes": [...], "edges": [...] } } }
+ *
+ *   build — "darktide.talent-build"  one player's choices
+ *            { "format": ..., "version": 1, ...,
+ *              "data": {
+ *                "picks":        { "version": 1, "nodes": [3, 7, 12] },
+ *                "incantations": { "version": 1,
+ *                                  "slots": [ {"slot":"lv1","incantation":"cmb_mind_wipe"},
+ *                                             {"slot":"lv2","incantation":null},
+ *                                             {"slot":"lv3","incantation":null} ] } } }
+ *
+ * A build stores node ids and nothing else — no links, no coordinates — so it
+ * stays meaningful against a tree that has been rearranged since.
  *
  * Rules that keep old files working:
  *   - A section this build knows about but the file lacks falls back to its
  *     built-in default, so old files keep loading after new features land.
  *   - A section the file carries but this build has never heard of is parked
- *     in `foreign` untouched and written straight back out on the next
+ *     in that store's `foreign` and written straight back out on the next
  *     export, so an older page can never silently eat a newer file's data.
  *   - A bare { nodes, edges } file (the original tree.json) is still accepted
- *     and read as a v1 tree section.
+ *     by the tree store and read as a v1 tree section.
+ *   - Incantations that v0.6 wrote into the tree document are lifted out on
+ *     load and handed to the build store instead.
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.6';
+const BUILD = '0.7';
 
 
 /* ------------------------------------------------------------------ *
@@ -326,21 +343,35 @@ function incValid(id, level){
 }
 
 const STORE_PREFIX = 'darktide.exorcist.';
-const STORE_KEY = STORE_PREFIX + 'doc.v1';
 const LEGACY_TREE_KEY = STORE_PREFIX + 'tree.v1';
-const FILE_FORMAT = 'darktide.talent-page';
-const FILE_VERSION = 1;
 
 let storageOK = true;
 let T = null;               // the tree section's payload
-let foreign = {};           // sections from a newer build, kept verbatim
-let docMeta = {};
+let buildPicks = [];        // ids of the nodes the player has taken
 
-/* --- section registry: one entry per chunk of page state --- */
-const SECTIONS = {};
-function defineSection(name, def){ SECTIONS[name] = def; }
+/* --- two independent stores, each with its own key, envelope and sections --- */
+const STORES = {
+  tree: {
+    key: STORE_PREFIX + 'doc.v1',
+    format: 'darktide.talent-page',
+    version: 1,
+    label: 'Exorcist talent tree',
+    legacy: [LEGACY_TREE_KEY],
+    sections: {}, foreign: {}, meta: {}, timer: null
+  },
+  build: {
+    key: STORE_PREFIX + 'build.v1',
+    format: 'darktide.talent-build',
+    version: 1,
+    label: 'Exorcist build',
+    legacy: [],
+    sections: {}, foreign: {}, meta: {}, timer: null
+  }
+};
+function defineSection(store, name, def){ STORES[store].sections[name] = def; }
 
-defineSection('tree', {
+/* ---- tree store: the shape of the tree itself ---- */
+defineSection('tree', 'tree', {
   version: 2,                 /* v2: node.tag (string) became node.tags (array),
                                      and the 'mid' region was renamed 'hybrid'.
                                      Both are coerced in reindex(), so v1 payloads
@@ -354,102 +385,157 @@ defineSection('tree', {
   reset(){ T = clone(DEFAULT_TREE); }
 });
 
-defineSection('incantations', {
+/* ---- build store: what the player picked, deliberately holding no topology ----
+   Only node ids are stored, never the links between them. That is what lets a
+   build survive being opened against a rearranged tree: see restoreBuild(). */
+defineSection('build', 'picks', {
   version: 1,
-  read(){ return {slots: {lv1: incSlots[1], lv2: incSlots[2], lv3: incSlots[3]}}; },
+  read(){ return {nodes: buildPicks.slice()}; },
   write(payload){
-    const s = payload.slots || {};
-    incSlots = {1: incValid(s.lv1, 1), 2: incValid(s.lv2, 2), 3: incValid(s.lv3, 3)};
+    const list = Array.isArray(payload.nodes) ? payload.nodes : [];
+    buildPicks = [...new Set(list.filter(n => typeof n === 'number'))];
+  },
+  reset(){ buildPicks = []; }
+});
+
+defineSection('build', 'incantations', {
+  version: 1,
+  read(){ return {slots: INC_LEVELS.map(l => ({slot:'lv'+l, incantation: incSlots[l]}))}; },
+  write(payload){
+    incSlots = {1:null, 2:null, 3:null};
+    const raw = payload.slots;
+    if(Array.isArray(raw)){
+      raw.forEach(entry => {
+        if(!entry || typeof entry !== 'object') return;
+        let slot = entry.slot, id = entry.incantation;
+        if(slot === undefined){                       // also accept {lv2: 'some_id'}
+          const k = Object.keys(entry)[0];
+          slot = k; id = entry[k];
+        }
+        const level = INC_LEVELS.find(l => 'lv' + l === slot);
+        if(level) incSlots[level] = incValid(id, level);
+      });
+    }else if(raw && typeof raw === 'object'){         // the v0.6 shape {lv1:…, lv2:…}
+      INC_LEVELS.forEach(l => { incSlots[l] = incValid(raw['lv'+l], l); });
+    }
   },
   reset(){ incSlots = {1:null, 2:null, 3:null}; }
 });
 
 /* Adding more page state later looks like this — nothing else has to change:
  *
- *   defineSection('loadouts', {
+ *   defineSection('build', 'loadouts', {
  *     version: 1,
  *     read(){ return {saved: loadouts}; },
  *     write(payload, version){ loadouts = version < 2 ? upgrade(payload) : payload.saved; },
  *     reset(){ loadouts = []; }
  *   });
  *
+ * Pick the store by what the data belongs to: the tree's own shape goes in
+ * 'tree', anything describing a particular player's choices goes in 'build'.
  * Bump a section's own `version` when its shape changes and branch on the
  * `version` argument in write() to bring older payloads forward.
  */
 
-function buildDoc(){
+function buildDoc(name){
+  const st = STORES[name];
   const doc = {
-    format: FILE_FORMAT,
-    version: FILE_VERSION,
+    format: st.format,
+    version: st.version,
     savedAt: new Date().toISOString(),
-    page: 'Exorcist talent tree',
+    page: st.label,
     build: BUILD,
     data: {}
   };
-  for(const k in foreign) doc.data[k] = foreign[k];          // pass unknown sections through
-  for(const k in SECTIONS) doc.data[k] = Object.assign({version: SECTIONS[k].version}, SECTIONS[k].read());
+  for(const k in st.foreign) doc.data[k] = st.foreign[k];      // pass unknown sections through
+  for(const k in st.sections) doc.data[k] = Object.assign({version: st.sections[k].version}, st.sections[k].read());
   return doc;
 }
 
-function readDoc(raw){
+function readDoc(name, raw){
+  const st = STORES[name];
   if(!raw || typeof raw !== 'object') throw new Error('the file is not a JSON object');
-  if(!raw.data && Array.isArray(raw.nodes) && Array.isArray(raw.edges))   // original tree.json
-    return {format:FILE_FORMAT, version:FILE_VERSION, page:'Exorcist talent tree',
+  if(name === 'tree' && !raw.data && Array.isArray(raw.nodes) && Array.isArray(raw.edges))
+    return {format:st.format, version:st.version, page:st.label,
             data:{tree:{version:1, nodes:raw.nodes, edges:raw.edges}}};
   if(!raw.data || typeof raw.data !== 'object') throw new Error('there is no data block in it');
+  if(raw.format && raw.format !== st.format)
+    throw new Error('it is a ' + raw.format + ' file, not a ' + st.format + ' one');
   return raw;
 }
 
-function applyDoc(doc){
+function applyDoc(name, doc){
+  const st = STORES[name];
   const data = doc.data;
   const next = {};
-  for(const k in data) if(!SECTIONS[k]) next[k] = clone(data[k]);
-  for(const k in SECTIONS){
-    const s = SECTIONS[k], p = data[k];
-    if(p) s.write(p, +p.version || 1); else s.reset();
+  for(const k in data) if(!st.sections[k]) next[k] = clone(data[k]);
+  for(const k in st.sections){
+    const sec = st.sections[k], p = data[k];
+    if(p) sec.write(p, +p.version || 1); else sec.reset();
   }
-  foreign = next;
-  docMeta = {format:doc.format, version:+doc.version || 1, savedAt:doc.savedAt};
+  st.foreign = next;
+  st.meta = {format:doc.format, version:+doc.version || 1, savedAt:doc.savedAt};
 }
-
-function loadStored(){
+function resetStore(name){
+  const st = STORES[name];
+  st.foreign = {};
+  for(const k in st.sections) st.sections[k].reset();
+}
+function loadStore(name){
+  const st = STORES[name];
   try{
-    const raw = localStorage.getItem(STORE_KEY) || localStorage.getItem(LEGACY_TREE_KEY);
-    return raw ? readDoc(JSON.parse(raw)) : null;
+    let raw = localStorage.getItem(st.key);
+    for(const k of st.legacy){ if(!raw) raw = localStorage.getItem(k); }
+    return raw ? readDoc(name, JSON.parse(raw)) : null;
   }catch(err){ return null; }
 }
-function wipeStorage(){
+function wipeStore(name){
+  const st = STORES[name];
   try{
-    Object.keys(localStorage)
-      .filter(k => k.indexOf(STORE_PREFIX) === 0)
-      .forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem(st.key);
+    st.legacy.forEach(k => localStorage.removeItem(k));
   }catch(err){ storageOK = false; }
 }
-let saveTimer = null;
-function save(now){
-  clearTimeout(saveTimer);
+function save(name, now){
+  const st = STORES[name];
+  clearTimeout(st.timer);
   const write = () => {
     try{
-      localStorage.setItem(STORE_KEY, JSON.stringify(buildDoc()));
-      localStorage.removeItem(LEGACY_TREE_KEY);
+      localStorage.setItem(st.key, JSON.stringify(buildDoc(name)));
+      st.legacy.forEach(k => localStorage.removeItem(k));
       storageOK = true;
     }catch(err){
       storageOK = false;
-      toast('This browser refused to store the tree. Download the file to keep your work.');
+      toast('This browser refused to store your work. Export to a file to keep it.');
     }
     stat();
   };
-  if(now) write(); else saveTimer = setTimeout(write, 300);
+  if(now) write(); else st.timer = setTimeout(write, 300);
 }
 
 /* ---------------- model ---------------- */
-const storedDoc = loadStored();
-let freshStart = !storedDoc;
-if(storedDoc){
-  try{ applyDoc(storedDoc); }
+const treeDoc = loadStore('tree');
+let freshStart = !treeDoc;
+let strayIncantations = null;      // v0.6 kept the picks inside the tree document
+if(treeDoc){
+  if(treeDoc.data && treeDoc.data.incantations){
+    strayIncantations = treeDoc.data.incantations;
+    delete treeDoc.data.incantations;
+  }
+  try{ applyDoc('tree', treeDoc); }
   catch(err){ T = null; freshStart = true; }
 }
-if(!T){ foreign = {}; SECTIONS.tree.reset(); }
+if(!T) resetStore('tree');
+
+const buildDocStored = loadStore('build');
+if(buildDocStored){
+  try{ applyDoc('build', buildDocStored); }
+  catch(err){ resetStore('build'); }
+}else{
+  resetStore('build');
+  if(strayIncantations) STORES.build.sections.incantations.write(strayIncantations, 1);
+}
+if(strayIncantations && !freshStart) save('tree', true);   // rewrite the tree doc without them
 
 let byId = {}, adj = {}, inc = {}, ROOT = 0;
 
@@ -483,20 +569,48 @@ function reindex(){
   ROOT = r ? r.id : T.nodes[0].id;
 }
 reindex();
-if(freshStart) save(true);
+if(freshStart) save('tree', true);
 
 const owned = new Set([ROOT]);
+let reach = new Set([ROOT]);            // owned nodes actually joined to the root right now
 let filt = '';
 
-function avail(id){ return id === ROOT || adj[id].some(p => owned.has(p)); }
-function connectedWithout(id){          // refund only if the rest stays joined to the root
-  const s = new Set(owned); s.delete(id);
-  const seen = new Set([ROOT]), q = [ROOT];
+/* Walks outwards from the root through owned nodes only. Anything owned that
+   this walk does not visit is an orphan: it was part of the saved build, but
+   the links that used to carry it no longer do. */
+function reachableFrom(set){
+  const seen = new Set(), q = [];
+  if(set.has(ROOT)){ seen.add(ROOT); q.push(ROOT); }
   while(q.length){
     const v = q.pop();
-    for(const k of adj[v]) if(s.has(k) && !seen.has(k)){ seen.add(k); q.push(k); }
+    for(const k of adj[v] || []) if(set.has(k) && !seen.has(k)){ seen.add(k); q.push(k); }
   }
-  return seen.size === s.size;
+  return seen;
+}
+function avail(id){ return id === ROOT || (adj[id] || []).some(p => reach.has(p)); }
+function connectedWithout(id){          // refund only if nothing still-connected gets cut off
+  const rest = new Set(owned); rest.delete(id);
+  const after = reachableFrom(rest);
+  for(const v of reach) if(v !== id && !after.has(v)) return false;
+  return true;
+}
+
+/* Pulls the saved build back out of storage and lays it over whatever tree is
+   loaded now. Ids that no longer exist are dropped; everything else is taken,
+   and paint() works out which of those are still reachable. */
+function restoreBuild(){
+  const kept = buildPicks.filter(id => byId[id] && id !== ROOT);
+  const pruned = kept.length !== buildPicks.length;
+  buildPicks = kept;
+  owned.clear();
+  owned.add(ROOT);
+  kept.forEach(id => owned.add(id));
+  paint();
+  if(pruned) save('build');
+}
+function rememberBuild(){
+  buildPicks = [...owned].filter(id => id !== ROOT);
+  save('build');
 }
 
 /* ---------------- edit state ---------------- */
@@ -508,7 +622,7 @@ let drag = null;
 let awaitFirst = false;             // waiting for the first node of a brand new link
 const undoStack = [];
 function pushUndo(snap){
-  undoStack.push({tree: snap || clone(T), foreign: clone(foreign), inc: clone(incSlots)});
+  undoStack.push({tree: snap || clone(T), foreign: clone(STORES.tree.foreign)});
   if(undoStack.length > 60) undoStack.shift();
 }
 
@@ -707,7 +821,7 @@ function wireNode(id, g){
     if(!drag || drag.id !== id) return;
     g.classList.remove('drag');
     document.body.classList.remove('dragging');
-    if(drag.moved){ pushUndo(drag.snap); save(); }
+    if(drag.moved){ pushUndo(drag.snap); save('tree'); }
     else selectNode(id);
     drag = null;
   };
@@ -787,7 +901,7 @@ function attachTo(id){
   pushUndo(before);
   pending = null;
   ghost.setAttribute('visibility','hidden');
-  reindex(); render(); save();
+  reindex(); render(); save('tree');
   toast('Link updated.');
 }
 function cancelPending(){
@@ -865,7 +979,7 @@ function addTags(raw){
 function tagsChanged(){
   const n = byId[selNode];
   nodeEls[n.id].tgs.textContent = n.tags.join(' \u00b7 ');
-  drawChips(); refreshTagLists(); paint(); save();
+  drawChips(); refreshTagLists(); paint(); save('tree');
 }
 function refreshTagLists(){
   const tags = allTags();
@@ -893,7 +1007,7 @@ function fieldEdit(input, apply, structural){
       nodeEls[n.id].g.setAttribute('aria-label', n.name);
       positionNode(n.id); inc[n.id].forEach(positionEdge); moveHandles();
     }
-    save();
+    save('tree');
   });
 }
 
@@ -919,7 +1033,7 @@ function addNode(drawnX, drawnY){
   pushUndo();
   T.nodes.push({id, x:spot.x, y:spot.y, type:'default', region:regionAt(spot.x + PAD),
                 name:'New node', tags:[], desc:''});
-  render(); selectNode(id); save();
+  render(); selectNode(id); save('tree');
   $('f-name').focus(); $('f-name').select();
   toast('Node added. It has no links yet.');
 }
@@ -938,16 +1052,19 @@ function deleteNode(id){
   owned.delete(id);
   cancelPending(); setAwaitFirst(false);
   selNode = selEdge = null;
-  render(); inspector(); save();
+  render(); inspector(); save('tree');
   toast('Node deleted.');
 }
 
 /* ---------------- build mode ---------------- */
 function toggle(id){
   if(id === ROOT) return;
-  if(owned.has(id)){ if(connectedWithout(id)){ owned.delete(id); paint(); } return; }
+  if(owned.has(id)){
+    if(connectedWithout(id)){ owned.delete(id); paint(); rememberBuild(); }
+    return;
+  }
   if(owned.size - 1 >= MAXPTS) return;
-  if(avail(id)){ owned.add(id); paint(); }
+  if(avail(id)){ owned.add(id); paint(); rememberBuild(); }
 }
 function show(e, n){
   const tip = $('tip');
@@ -973,6 +1090,8 @@ function allTags(){ return [...new Set(T.nodes.flatMap(n => n.tags))].sort(); }
 function paint(){
   [...owned].forEach(id => { if(!byId[id]) owned.delete(id); });
   owned.add(ROOT);
+  reach = reachableFrom(owned);
+  const orphans = [...owned].filter(id => !reach.has(id));
   const sp = owned.size - 1;
   $('spent').textContent = sp;
   $('fill').style.width = (100 * sp / MAXPTS) + '%';
@@ -989,11 +1108,18 @@ function paint(){
   setLock(2, pts >= 2); setLock(3, pts >= 4);
   T.nodes.forEach(n => {
     const g = nodeEls[n.id].g;
-    g.classList.toggle('on', owned.has(n.id));
+    const stray = owned.has(n.id) && !reach.has(n.id);
+    g.classList.toggle('on', owned.has(n.id) && !stray);
+    g.classList.toggle('orphan', stray);
     g.classList.toggle('avail', !owned.has(n.id) && avail(n.id));
     g.classList.toggle('dim', !!filt && !n.tags.includes(filt));
   });
-  T.edges.forEach(([a,b], i) => edgeEls[i].line.classList.toggle('live', owned.has(a) && owned.has(b)));
+  T.edges.forEach(([a,b], i) => edgeEls[i].line.classList.toggle('live', reach.has(a) && reach.has(b)));
+  const note = $('orph');
+  note.hidden = !orphans.length;
+  if(orphans.length) note.textContent = orphans.length +
+    (orphans.length === 1 ? ' node in this build is' : ' nodes in this build are') +
+    ' cut off from the root under the current tree \u2014 shown in red.';
 }
 
 
@@ -1040,9 +1166,12 @@ function buildPickers(){
       const h = document.createElement('div');
       h.className = 'grp ' + side; h.textContent = label;
       pop.appendChild(h);
+      let tier = items.length ? items[0].level : 0;
       items.forEach(item => {
         const o = document.createElement('div');
-        o.className = 'opt'; o.textContent = item.name;
+        o.className = 'opt' + (item.level > tier ? ' tier' : '');
+        tier = item.level;
+        o.textContent = item.name;
         o.setAttribute('role', 'option'); o.dataset.inc = item.id;
         o.addEventListener('click', () => choose(level, item.id));
         o.addEventListener('mouseenter', () => { hi(level, o); showIncTip(item, pop); });
@@ -1097,11 +1226,10 @@ function closePick(){
   hideIncTip();
 }
 function choose(level, id){
-  pushUndo();
   incSlots[level] = incValid(id, level);
   closePick();
   syncPickers();
-  save();
+  save('build');
 }
 function syncPickers(){
   INC_LEVELS.forEach(level => {
@@ -1159,7 +1287,7 @@ function toast(msg){
   clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = 0; }, 2600);
 }
 function stat(){
-  const extra = Object.keys(foreign).length;
+  const extra = Object.keys(STORES.tree.foreign).length;
   const base = storageOK
     ? `Stored in this browser \u00b7 ${T.nodes.length} nodes \u00b7 ${T.edges.length} links`
     : `Not being stored \u2014 this browser blocks local storage \u00b7 ${T.nodes.length} nodes \u00b7 ${T.edges.length} links`;
@@ -1172,6 +1300,9 @@ function setMode(m){
   $('build-panel').hidden = m !== 'build';
   $('edit-panel').hidden = m !== 'edit';
   document.body.classList.toggle('editing', m === 'edit');
+  closePick();
+  $('inc').hidden = (m !== 'build');
+  if(m === 'build') restoreBuild();          // the tree may have changed while editing
   $('tip').style.opacity = 0;
   setAwaitFirst(false); cancelPending(); clearSelection();
   drawHandles();
@@ -1189,7 +1320,7 @@ fieldEdit($('f-y'), (n,v) => { const y = parseFloat(v); if(!isNaN(y)) n.y = y; }
 
 $('tab-build').onclick = () => setMode('build');
 $('tab-edit').onclick = () => setMode('edit');
-$('reset').onclick = () => { owned.clear(); owned.add(ROOT); paint(); };
+$('reset').onclick = () => { owned.clear(); owned.add(ROOT); paint(); rememberBuild(); };
 $('filt').onchange = e => { filt = e.target.value; paint(); };
 $('opt-handles').onchange = drawHandles;
 $('new-link').onclick = () => { if(selNode !== null){ setAwaitFirst(false); startNewLink(selNode); } };
@@ -1217,18 +1348,18 @@ $('del-link').onclick = () => {
   pushUndo();
   T.edges.splice(selEdge, 1);
   selEdge = null;
-  render(); save(); toast('Link deleted.');
+  render(); save('tree'); toast('Link deleted.');
 };
 $('undo').onclick = () => {
   if(!undoStack.length){ toast('Nothing left to undo.'); return; }
   const step = undoStack.pop();
-  T = step.tree; foreign = step.foreign; incSlots = step.inc || {1:null,2:null,3:null};
+  T = step.tree; STORES.tree.foreign = step.foreign;
   cancelPending(); selNode = selEdge = null;
-  render(); inspector(); save();
+  render(); inspector(); save('tree');
   toast('Reverted one change.');
 };
 $('exp').onclick = () => {
-  const doc = buildDoc();
+  const doc = buildDoc('tree');
   const blob = new Blob([JSON.stringify(doc, null, 1)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1242,13 +1373,12 @@ $('imp').onchange = ev => {
   const r = new FileReader();
   r.onload = () => {
     try{
-      const doc = readDoc(JSON.parse(r.result));
+      const doc = readDoc('tree', JSON.parse(r.result));
       pushUndo();
-      wipeStorage();
-      applyDoc(doc);
-      owned.clear();
-      render(); owned.add(ROOT); paint(); clearSelection(); save(true);
-      const extra = Object.keys(foreign).length;
+      wipeStore('tree');
+      applyDoc('tree', doc);
+      render(); restoreBuild(); clearSelection(); save('tree', true);
+      const extra = Object.keys(STORES.tree.foreign).length;
       toast('Loaded ' + f.name + ', replacing the copy in this browser.' +
         (extra ? ' It also carries ' + extra + ' section(s) this page build does not read yet — those are being kept.' : ''));
     }catch(err){ toast('That file is not a saved talent page: ' + err.message + '.'); }
@@ -1259,11 +1389,9 @@ $('imp').onchange = ev => {
 $('wipe').onclick = () => {
   if(!confirm('Throw away every change you have made in this browser and go back to the built-in tree?')) return;
   pushUndo();
-  wipeStorage();
-  foreign = {};
-  for(const k in SECTIONS) SECTIONS[k].reset();
-  owned.clear();
-  render(); owned.add(ROOT); paint(); clearSelection(); save(true);
+  wipeStore('tree');
+  resetStore('tree');
+  render(); restoreBuild(); clearSelection(); save('tree', true);
   toast('Back to the built-in tree.');
 };
 
@@ -1292,22 +1420,23 @@ window.addEventListener('keydown', ev => {
     if(ev.key === 'ArrowDown') n.y += step;
     positionNode(n.id); inc[n.id].forEach(positionEdge); moveHandles();
     $('f-x').value = Math.round(n.x); $('f-y').value = Math.round(n.y);
-    save();
+    save('tree');
   }
 });
 
 $('ver').textContent = 'v' + BUILD;
 buildPickers();
 if(/[?&]reset\b/.test(location.search)){       // escape hatch: index.html?reset
-  wipeStorage(); foreign = {}; SECTIONS.tree.reset(); freshStart = true;
+  wipeStore('tree'); wipeStore('build'); resetStore('tree'); resetStore('build'); freshStart = true;
 }
 try{
   render();
 }catch(err){                                   // a stored copy this build cannot draw must never trap you
   console.error(err);
-  wipeStorage(); foreign = {}; SECTIONS.tree.reset();
-  render(); save(true);
+  wipeStore('tree'); resetStore('tree');
+  render(); save('tree', true);
   toast('The copy stored in this browser could not be read, so the built-in tree is back.');
 }
+restoreBuild();
 if(freshStart) toast('Your own copy of this tree now lives in this browser.');
 </script></body></html>
