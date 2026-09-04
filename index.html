@@ -13,6 +13,7 @@
 }
 *{box-sizing:border-box} html,body{margin:0;height:100%}
 body{background:var(--ground);color:var(--ink);font-family:Barlow,system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+body.dragging{user-select:none}
 aside{flex:0 0 300px;background:linear-gradient(180deg,#1b1f26,#161a20);border-right:1px solid var(--hair);
   padding:22px 20px;overflow-y:auto}
 h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:600;margin:0 0 2px;letter-spacing:.01em}
@@ -36,7 +37,7 @@ button{width:100%;margin-top:20px;padding:10px;background:transparent;border:1px
   letter-spacing:.1em;cursor:pointer}
 button:hover,button:focus-visible{border-color:var(--support);color:var(--support)}
 main{flex:1;position:relative;overflow:auto}
-svg{display:block;margin:0 auto}
+svg{display:block;margin:0 auto;touch-action:none}
 .band text{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.22em;
   text-transform:uppercase;opacity:.5}
 .wire{stroke:var(--wire);stroke-width:1.6}
@@ -59,115 +60,799 @@ svg{display:block;margin:0 auto}
 #tip h3{margin:0 0 3px;font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600}
 #tip .tag{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.09em;color:var(--muted);margin-bottom:7px}
 #tip p{margin:0;font-size:13.5px;line-height:1.5}
+
+/* ---- editing ---- */
+.tabs{display:flex;gap:6px;margin:0 0 18px}
+.tabs button{margin:0;padding:7px 4px;font-size:12px}
+.tabs button.on{border-color:var(--support);color:var(--support);background:#20242c}
+.hint{font-size:12.5px;line-height:1.55;color:var(--muted)}
+.fld{display:block;margin:0 0 10px}
+.fld span{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--panel2);color:var(--ink);
+  border:1px solid var(--hair);border-radius:3px;padding:6px 7px;font-family:Barlow,sans-serif;font-size:13px}
+.fld textarea{resize:vertical;line-height:1.45}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--support)}
+.pair{display:flex;gap:8px}
+.pair .fld{flex:1}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:0 0 8px;cursor:pointer}
+.chk input{accent-color:var(--support)}
+.mini{margin-top:10px;padding:7px}
+.edgeline{font-size:13.5px;line-height:1.5;margin:0 0 4px}
+.edgeline b{font-weight:500;color:var(--on)}
+
+body.editing .nd{cursor:grab}
+body.editing .nd.drag{cursor:grabbing}
+body.editing main{background-image:radial-gradient(#232833 1px,transparent 1px);background-size:20px 20px}
+.ehit{stroke:transparent;stroke-width:12;fill:none}
+body.editing .ehit{cursor:pointer}
+.wire.sel{stroke:#e9edf3;stroke-width:2.4}
+.wire.ghost{stroke:var(--support);stroke-width:2.2;stroke-dasharray:6 5}
+.nd.pick .bg{stroke:var(--support);stroke-dasharray:3 3}
+.nd.selnode .bg{stroke:#e9edf3;stroke-width:2.6}
+.handle{fill:var(--wire-on);stroke:#0f1216;stroke-width:1.4;cursor:pointer}
+.handle:hover{fill:#fff;stroke:var(--support)}
+.handle.loose{fill:#fff}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0f1216;
+  border:1px solid var(--hair);border-left:3px solid var(--support);padding:9px 14px;border-radius:3px;
+  font-size:13px;opacity:0;transition:opacity .15s;pointer-events:none;z-index:20}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <aside>
   <h1>Exorcist</h1>
   <div class="sub">Talent tree &middot; pre-alpha mockup</div>
-  <div class="budget"><b id="spent">0</b><span>of 30 points spent</span></div>
-  <div class="bar"><i id="fill"></i></div>
-  <h2>Points by region</h2>
-  <div class="row"><em><span class="swatch" style="background:var(--combat)"></span>Left &middot; combat</em><span id="r-combat">0</span></div>
-  <div class="row"><em><span class="swatch" style="background:var(--support)"></span>Centre &middot; support</em><span id="r-support">0</span></div>
-  <div class="row"><em><span class="swatch" style="background:var(--mid)"></span>Right &middot; control</em><span id="r-mid">0</span></div>
-  <h2>Incantation slots</h2>
-  <div class="slots"><div class="slot on" id="s1">Lv I</div><div class="slot" id="s2">Lv II</div><div class="slot" id="s3">Lv III</div></div>
-  <h2>Highlight a tag</h2>
-  <div class="row"><em>Filter</em><span><select id="filt" style="background:var(--panel2);color:var(--ink);border:1px solid var(--hair);border-radius:3px;padding:3px"></select></span></div>
-  <button id="reset">Clear build</button>
+  <div class="tabs"><button id="tab-build" class="on">Build</button><button id="tab-edit">Edit tree</button></div>
+
+  <div id="build-panel">
+    <div class="budget"><b id="spent">0</b><span>of 30 points spent</span></div>
+    <div class="bar"><i id="fill"></i></div>
+    <h2>Points by region</h2>
+    <div class="row"><em><span class="swatch" style="background:var(--combat)"></span>Left &middot; combat</em><span id="r-combat">0</span></div>
+    <div class="row"><em><span class="swatch" style="background:var(--support)"></span>Centre &middot; support</em><span id="r-support">0</span></div>
+    <div class="row"><em><span class="swatch" style="background:var(--mid)"></span>Right &middot; control</em><span id="r-mid">0</span></div>
+    <h2>Incantation slots</h2>
+    <div class="slots"><div class="slot on" id="s1">Lv I</div><div class="slot" id="s2">Lv II</div><div class="slot" id="s3">Lv III</div></div>
+    <h2>Highlight a tag</h2>
+    <div class="row"><em>Filter</em><span><select id="filt" style="background:var(--panel2);color:var(--ink);border:1px solid var(--hair);border-radius:3px;padding:3px"></select></span></div>
+    <button id="reset">Clear build</button>
+  </div>
+
+  <div id="edit-panel" hidden>
+    <div class="hint" id="insp-empty">
+      Drag a node to move it. Click a node to rename it.<br><br>
+      Every link shows a dot where it meets a node. Click a dot to pull that end loose, then click the node it should go to.
+    </div>
+
+    <div id="insp-node" hidden>
+      <h2>Node</h2>
+      <label class="fld"><span>Name</span><input id="f-name"></label>
+      <label class="fld"><span>Description</span><textarea id="f-desc" rows="5"></textarea></label>
+      <label class="fld"><span>Tag</span><input id="f-tag"></label>
+      <div class="pair">
+        <label class="fld"><span>Type</span><select id="f-type"></select></label>
+        <label class="fld"><span>Region</span><select id="f-region"></select></label>
+      </div>
+      <div class="pair">
+        <label class="fld"><span>X</span><input id="f-x" type="number" step="1"></label>
+        <label class="fld"><span>Y</span><input id="f-y" type="number" step="1"></label>
+      </div>
+      <button id="new-link" class="mini">Draw a link from here</button>
+    </div>
+
+    <div id="insp-edge" hidden>
+      <h2>Link</h2>
+      <p class="edgeline" id="edge-a"></p>
+      <p class="edgeline" id="edge-b"></p>
+      <button id="del-link" class="mini">Delete this link</button>
+    </div>
+
+    <h2>Options</h2>
+    <label class="chk"><input type="checkbox" id="opt-handles"> Show every link dot</label>
+    <label class="chk"><input type="checkbox" id="opt-snap" checked> Snap to a 10px grid</label>
+
+    <h2>Your copy of the tree</h2>
+    <div class="hint" id="stat"></div>
+    <button id="undo" class="mini">Undo last change</button>
+    <button id="exp" class="mini">Export to a file</button>
+    <button id="imp-btn" class="mini">Import from a file&hellip;</button>
+    <input type="file" id="imp" accept=".json,application/json" hidden>
+    <button id="wipe" class="mini">Reset to the built-in tree</button>
+  </div>
 </aside>
 <main><div id="host"></div></main>
 <div id="tip"></div>
+<div id="toast"></div>
 <script>
-const T={"nodes":[{"x":690,"y":70,"type":"root","region":"support","name":"Exorcist","tag":"start","desc":"Ecclesiarchy exorcist seconded to Grendyl's retinue. 200 HP / 85 Toughness / 5% crit.","id":0},{"x":340,"y":178,"type":"default","region":"combat","name":"Rite of Wrath","tag":"melee_damage+","desc":"+5% Melee Damage.","id":1},{"x":690,"y":178,"type":"default","region":"support","name":"Attentive Ministry","tag":"support","desc":"Allies in coherency gain +5% Toughness from all replenishment sources.","id":2},{"x":1040,"y":178,"type":"default","region":"mid","name":"Braced Litany","tag":"toughness+","desc":"+15 Toughness.","id":3},{"x":230,"y":286,"type":"default","region":"combat","name":"Kindled Ire","tag":"DoT_damage+","desc":"Soulblaze you apply deals +15% damage.","id":4},{"x":450,"y":286,"type":"default","region":"combat","name":"Keen Sight","tag":"crit_chance+","desc":"+3% Critical Hit Chance.","id":5},{"x":580,"y":286,"type":"default","region":"support","name":"Warding Hand","tag":"support","desc":"+20% revive and assist speed (stacks with base).","id":6},{"x":800,"y":286,"type":"default","region":"support","name":"Soul Thrift","tag":"soulfire_economy","desc":"-10% Soulfire cost on all Incantations.","id":7},{"x":1040,"y":286,"type":"default","region":"mid","name":"Staggering Word","tag":"stagger+","desc":"+15% Impact with all weapons.","id":8},{"x":1260,"y":286,"type":"default","region":"mid","name":"Wary Step","tag":"mobility+","desc":"+5% Movement Speed.","id":9},{"x":340,"y":394,"type":"blitz","region":"combat","name":"Dominate","tag":"do_CC","desc":"Pulls nearby mobs into an AoE and freezes them for 5s, forming an obstacle. Nearby mobs are slowed. Direct damage frees a target. Costs 1 SE.","id":10},{"x":690,"y":394,"type":"blitz","region":"support","name":"Sanctic Dome","tag":"support","desc":"Telekine Dome that halts daemonic entry. On dissipation, restores 50-100% of HP allies lost inside it. Costs 2-3 SE.","id":11},{"x":1040,"y":394,"type":"blitz","region":"mid","name":"Telekine Palm","tag":"utility","desc":"Manipulate objects at range, clear hazard patches, or extract a downed ally to your position. Costs 1-2 SE.","id":12},{"x":230,"y":502,"type":"blitzmod","region":"combat","name":"Grip of Iron","tag":"CC_duration+","desc":"Dominate holds targets for +2s.","id":13},{"x":450,"y":502,"type":"blitzmod","region":"combat","name":"Immolating Grasp","tag":"DoT_stacks+","desc":"Enemies held by Dominate gain 4 stacks of Soulblaze.","id":14},{"x":580,"y":502,"type":"blitzmod","region":"support","name":"Consecrated Ground","tag":"support","desc":"Sanctic Dome also cleanses 25% of a wound of Corruption on dissipation.","id":15},{"x":800,"y":502,"type":"blitzmod","region":"support","name":"Ember Thrift","tag":"soulfire_economy","desc":"Sanctic Dome costs 1 fewer Soul Ember.","id":16},{"x":930,"y":502,"type":"blitzmod","region":"mid","name":"Far Reach","tag":"utility","desc":"Telekine Palm range +50%. Hazard clearing radius +40%.","id":17},{"x":1150,"y":502,"type":"blitzmod","region":"mid","name":"Sundering Pull","tag":"do_CC","desc":"Extracting an ally staggers enemies along the path.","id":18},{"x":230,"y":610,"type":"default","region":"combat","name":"Anathema","tag":"damage_vs_daemon+","desc":"+20% damage to Daemonhosts and Infested.","id":19},{"x":450,"y":610,"type":"default","region":"combat","name":"Searing Focus","tag":"DoT_stacks+","desc":"Critical hits apply 2 stacks of Soulblaze.","id":20},{"x":690,"y":610,"type":"stat","region":"support","name":"Toughness Boost","tag":"toughness+","desc":"+20 Toughness.","id":21},{"x":580,"y":610,"type":"default","region":"support","name":"Litany Unbroken","tag":"incantation_power+","desc":"Single-target Incantations restore an extra 8% Toughness.","id":22},{"x":1040,"y":610,"type":"default","region":"mid","name":"Cowing Presence","tag":"suppression+","desc":"Staggering an enemy suppresses others within 4m.","id":23},{"x":1260,"y":610,"type":"default","region":"mid","name":"White Noise","tag":"suppression+","desc":"Suppression you inflict lasts 1.5s longer, and suppressed shooters move 15% slower.","id":24},{"x":340,"y":718,"type":"aura","region":"combat","name":"Psyniscience","tag":"utility","desc":"Specialists and Disablers within 25m are outlined for all allies in coherency, through walls.","id":25},{"x":690,"y":718,"type":"aura","region":"support","name":"Unyielding Vigil","tag":"support","desc":"Allies in coherency gain +15% Toughness from all replenishment; downed allies lose downed-health 25% slower.","id":26},{"x":1040,"y":718,"type":"aura","region":"mid","name":"Litany of Abjuration","tag":"support","desc":"Allies in coherency: +25% Corruption resistance; DoTs on them expire 30% faster.","id":27},{"x":340,"y":826,"type":"ability","region":"combat","name":"Dome of Banishment","tag":"DoT_damage+","desc":"Pulls non-boss enemies into an AoE and applies 10 Soulblaze, +5 per ally also inside.","id":28},{"x":690,"y":826,"type":"ability","region":"support","name":"Distort Vision","tag":"utility","desc":"Invisible for 7s and spawn an improved decoy that absorbs aggro. Support Incantations do not break stealth until they resolve.","id":29},{"x":1040,"y":826,"type":"ability","region":"mid","name":"Telekine Fling","tag":"do_CC","desc":"Grip, lift and hurl a human-sized enemy. Charge time and swing width set distance and AoE. Impact kills the thrown target and staggers everything it hits.","id":30},{"x":230,"y":934,"type":"abilmod","region":"combat","name":"Widening Gyre","tag":"DoT_stacks+","desc":"Dome of Banishment applies +4 Soulblaze per ally inside.","id":31},{"x":450,"y":934,"type":"abilmod","region":"combat","name":"Hungering Dome","tag":"soulfire_on_kill","desc":"Enemies dying inside Dome of Banishment each grant Soulfire.","id":32},{"x":580,"y":934,"type":"abilmod","region":"support","name":"Lingering Shade","tag":"support","desc":"Distort Vision decoy lasts +4s and taunts nearby enemies.","id":33},{"x":800,"y":934,"type":"abilmod","region":"support","name":"Veiled Ministry","tag":"incantation_power+","desc":"Incantations cast from stealth cost 40% less Soulfire.","id":34},{"x":930,"y":934,"type":"abilmod","region":"mid","name":"Wider Arc","tag":"do_CC","desc":"Telekine Fling ballistic throws gain +50% impact radius.","id":35},{"x":1150,"y":934,"type":"abilmod","region":"mid","name":"Unburdened Grip","tag":"ability_cooldown+","desc":"Killing the thrown target refunds 20% Ability cooldown.","id":36},{"x":340,"y":1042,"type":"abilmod","region":"combat","name":"Banishment Echo","tag":"ability_cooldown+","desc":"Dome of Banishment cooldown -20%.","id":37},{"x":690,"y":1042,"type":"abilmod","region":"support","name":"Parting Pulse","tag":"do_CC","desc":"Decoy's expiry pulse staggers in a 8m radius and restores 15% Toughness to allies in it.","id":38},{"x":1040,"y":1042,"type":"abilmod","region":"mid","name":"Second Grip","tag":"ability_charges+","desc":"+1 charge of Telekine Fling.","id":39},{"x":120,"y":1042,"type":"stat","region":"combat","name":"Melee Damage Boost","tag":"melee_damage+","desc":"+10% Melee Damage.","id":40},{"x":1260,"y":1042,"type":"stat","region":"mid","name":"Impact Boost","tag":"stagger+","desc":"+10% Impact.","id":41},{"x":230,"y":1150,"type":"default","region":"combat","name":"Zealot's Cadence","tag":"attack_speed+","desc":"+8% Attack Speed after a Soulblaze kill.","id":42},{"x":450,"y":1150,"type":"default","region":"combat","name":"Rent Faith","tag":"rending+","desc":"+10% Rending against burning enemies.","id":43},{"x":580,"y":1150,"type":"default","region":"support","name":"Deeper Communion","tag":"incantation_slot_point","desc":"Counts toward unlocking your Level II Incantation slot.","id":44},{"x":800,"y":1150,"type":"default","region":"support","name":"Unstinting Hand","tag":"support","desc":"Incantations cast on an ally below 50% HP also grant them +20% damage resistance for 5s.","id":45},{"x":930,"y":1150,"type":"default","region":"mid","name":"Breaking Word","tag":"vulnerability_debuff","desc":"Staggered enemies take +8% damage from all sources.","id":46},{"x":1150,"y":1150,"type":"default","region":"mid","name":"Toll of Control","tag":"toughness_on_CC","desc":"Staggering an Elite restores 8% Toughness.","id":47},{"x":120,"y":1258,"type":"default","region":"combat","name":"Pyre Unbound","tag":"DoT_damage+","desc":"Soulblaze stacks past the normal cap, to 12.","id":48},{"x":340,"y":1258,"type":"default","region":"combat","name":"Weakspot Doctrine","tag":"weakspot_damage+","desc":"+15% Weakspot Damage.","id":49},{"x":690,"y":1258,"type":"default","region":"support","name":"Wider Communion","tag":"aura_radius+","desc":"+35% coherency radius. You also see exact HP and Toughness values on allies, not just cues.","id":50},{"x":580,"y":1258,"type":"default","region":"support","name":"Vigil Eternal","tag":"support","desc":"Reviving an ally restores 30% Toughness to every ally in coherency. Allies in coherency also take -5% damage while you are above 50% Peril.","id":51},{"x":1040,"y":1258,"type":"default","region":"mid","name":"Seal the Breach","tag":"peril_safety","desc":"Consumes 2 Soul Embers to negate a Peril Overload, venting 50% Peril and staggering within 5m. 20s lockout. Will not fire while holding Quell.","id":52},{"x":1260,"y":1258,"type":"default","region":"mid","name":"Confound","tag":"do_CC","desc":"Elites and Monstrosities you stagger stay staggered 50% longer and cannot call for reinforcements while staggered.","id":53},{"x":120,"y":610,"type":"default","region":"combat","name":"Ember Draught","tag":"soulfire_on_kill","desc":"Melee kills generate Soulfire.","id":54},{"x":1260,"y":718,"type":"default","region":"mid","name":"Weapon Jinx","tag":"do_CC","desc":"Enemies you stagger attack 20% slower for 3s.","id":55},{"x":690,"y":1150,"type":"default","region":"support","name":"Patient Litany","tag":"soulfire_economy","desc":"Soulfire regenerates 25% faster while no ally is below 50% Toughness.","id":56},{"x":340,"y":1150,"type":"default","region":"combat","name":"Ranged Doctrine","tag":"ranged_damage+","desc":"+8% Ranged Damage.","id":57},{"x":120,"y":1150,"type":"default","region":"combat","name":"Wrathful Cadence","tag":"attack_speed+","desc":"+6% Attack Speed while burning enemies are nearby.","id":58},{"x":1040,"y":1150,"type":"stat","region":"mid","name":"Toughness Boost","tag":"toughness+","desc":"+20 Toughness.","id":59},{"x":230,"y":1258,"type":"default","region":"combat","name":"Kindler","tag":"DoT_stacks+","desc":"Heavy attacks apply 1 stack of Soulblaze.","id":60},{"x":450,"y":1258,"type":"default","region":"combat","name":"Immolate","tag":"DoT_damage+","desc":"Soulblaze spreads to a nearby enemy when its target dies.","id":61},{"x":800,"y":1258,"type":"default","region":"support","name":"Unspoken Rite","tag":"incantation_power+","desc":"AoE Incantations affect an extra 3m, and Corruption-removing Incantations remove an extra 10% of a wound.","id":62},{"x":930,"y":1258,"type":"default","region":"mid","name":"Grim Composure","tag":"toughness+","desc":"+10% Toughness Damage Reduction while above 75% Peril.","id":63},{"x":1150,"y":1258,"type":"default","region":"mid","name":"Measured Force","tag":"toughness_on_CC","desc":"Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%.","id":64},{"x":285,"y":1366,"type":"keystone","region":"combat","name":"Vessel of Sorrows","tag":"combat_keystone","desc":"Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember.","id":65},{"x":175,"y":1474,"type":"keymod","region":"combat","name":"Ashen Crown","tag":"crit_chance+","desc":"Each Soulblaze tier grants +4% Critical Hit Chance.","id":66},{"x":285,"y":1474,"type":"keymod","region":"combat","name":"Unspent Wrath","tag":"DoT_damage+","desc":"Each Soulblaze tier grants +8% damage to burning targets.","id":67},{"x":395,"y":1474,"type":"keymod","region":"combat","name":"Cinder Hoard","tag":"soulfire_on_kill","desc":"Soulblaze kills generate +30% Soulfire.","id":68},{"x":230,"y":1582,"type":"keymod","region":"combat","name":"Wrath Sustained","tag":"DoT_stacks+","desc":"Soulblaze tiers decay one step slower.","id":69},{"x":340,"y":1582,"type":"keymod","region":"combat","name":"Last Ember","tag":"crit_chance+","desc":"+10% Critical Hit Chance while at 3/3 Soul Embers.","id":70},{"x":285,"y":1690,"type":"keymod","region":"combat","name":"Final Pyre","tag":"DoT_damage+","desc":"Soulblaze on Elites deals +25% damage.","id":71},{"x":690,"y":1366,"type":"keystone","region":"support","name":"Sanctic Bond","tag":"support_keystone","desc":"Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss.","id":72},{"x":580,"y":1474,"type":"keymod","region":"support","name":"Willing Burden","tag":"damage_absorb","desc":"Absorb an additional 10% of allies' incoming damage.","id":73},{"x":690,"y":1474,"type":"keymod","region":"support","name":"Tempered Vessel","tag":"toughness+","desc":"+20% Toughness Damage Reduction while Sanctic Bond is active.","id":74},{"x":800,"y":1474,"type":"keymod","region":"support","name":"Vow Unbroken","tag":"incantation_slot_point","desc":"Counts toward unlocking your Level III Incantation slot.","id":75},{"x":635,"y":1582,"type":"keymod","region":"support","name":"Shared Suffering","tag":"damage_absorb","desc":"Absorbed damage is split evenly across all bonded allies rather than paid by you alone.","id":76},{"x":745,"y":1582,"type":"keymod","region":"support","name":"Anchored Faith","tag":"support","desc":"Bonded allies cannot be reduced below 1 HP by a single hit once per 60s.","id":77},{"x":690,"y":1690,"type":"keymod","region":"support","name":"Martyr's Ledger","tag":"damage_absorb","desc":"Peril gained from Sanctic Bond is halved.","id":78},{"x":1095,"y":1366,"type":"keystone","region":"mid","name":"Weaken the Veil","tag":"hybrid_keystone","desc":"Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die.","id":79},{"x":985,"y":1474,"type":"keymod","region":"mid","name":"Rites of Unmaking","tag":"vulnerability_debuff","desc":"Unhallowed enemies take an additional +10% damage.","id":80},{"x":1095,"y":1474,"type":"keymod","region":"mid","name":"Warden's Toll","tag":"soulfire_on_CC","desc":"Unhallowed enemies grant +50% Soulfire on death.","id":81},{"x":1205,"y":1474,"type":"keymod","region":"mid","name":"Spreading Doubt","tag":"do_CC","desc":"Killing an Unhallowed enemy staggers others within 5m.","id":82},{"x":1040,"y":1582,"type":"keymod","region":"mid","name":"Hollow Ranks","tag":"suppression+","desc":"Unhallowed enemies suppress their neighbours.","id":83},{"x":1150,"y":1582,"type":"keymod","region":"mid","name":"Steady Hand","tag":"ability_cooldown+","desc":"-15% Ability cooldown while any Unhallowed enemy lives.","id":84},{"x":1095,"y":1690,"type":"keymod","region":"mid","name":"Silence the Choir","tag":"do_CC","desc":"Unhallowed Specialists are silenced: they cannot use ranged or special attacks.","id":85}],"edges":[[0,2],[1,4],[1,5],[1,6],[2,5],[2,6],[2,7],[3,7],[3,8],[3,9],[4,10],[5,10],[6,11],[7,11],[8,12],[9,12],[10,13],[10,14],[10,15],[11,14],[11,15],[11,16],[11,17],[12,16],[12,17],[12,18],[13,19],[13,54],[14,19],[14,20],[14,22],[15,20],[15,21],[15,22],[16,21],[17,23],[18,23],[18,24],[19,25],[20,25],[21,26],[22,21],[22,26],[23,27],[23,55],[24,27],[24,55],[25,28],[26,29],[27,30],[28,31],[28,32],[28,33],[29,32],[29,33],[29,34],[29,35],[30,34],[30,35],[30,36],[31,37],[31,40],[32,37],[33,38],[34,38],[35,39],[36,39],[36,41],[37,42],[37,43],[37,44],[37,57],[37,58],[38,43],[38,44],[38,45],[38,46],[38,56],[39,45],[39,46],[39,47],[39,59],[40,42],[40,57],[40,58],[41,47],[41,59],[42,48],[42,49],[42,57],[42,60],[43,61],[44,50],[44,51],[44,56],[45,62],[46,52],[46,59],[46,63],[47,53],[47,64],[48,60],[48,65],[49,61],[49,65],[50,62],[50,72],[51,50],[51,72],[52,64],[52,79],[53,79],[54,19],[54,25],[55,30],[56,45],[56,50],[56,51],[56,62],[57,43],[57,49],[57,60],[57,61],[58,42],[58,48],[59,47],[59,52],[59,53],[59,63],[59,64],[60,49],[60,65],[62,72],[63,52],[64,53],[64,79],[65,66],[65,67],[65,68],[66,69],[67,69],[67,70],[68,70],[69,71],[70,71],[72,73],[72,74],[72,75],[73,76],[74,76],[74,77],[75,77],[76,78],[77,78],[79,80],[79,81],[79,82],[80,83],[81,83],[81,84],[82,84],[83,85],[84,85]]};
-const N=T.nodes, E=T.edges;
-const kids={},par={};
-N.forEach((n,i)=>{par[i]=[];kids[i]=[]});
-E.forEach(([a,b])=>{kids[a].push(b);par[b].push(a);kids[b].push(a);par[a].push(b)});
-const owned=new Set([0]);
-const W=1380,H=1920,PAD=60;
-const SH={root:20,keystone:19,ability:17,blitz:16,aura:16,keymod:12,abilmod:12,blitzmod:12,stat:11,default:13};
-let svg,tip=document.getElementById('tip'),filt='';
+"use strict";
+/* ------------------------------------------------------------------ *
+ * Default topology. Used the first time this browser opens the page,
+ * and by "Reset to the built-in tree". Keep it in sync with tree.json.
+ * ------------------------------------------------------------------ */
+const DEFAULT_TREE = {"nodes":[{"x":690,"y":70,"type":"root","region":"support","name":"Exorcist","tag":"start","desc":"Ecclesiarchy exorcist seconded to Grendyl's retinue. 200 HP / 85 Toughness / 5% crit.","id":0},{"x":340,"y":178,"type":"default","region":"combat","name":"Rite of Wrath","tag":"melee_damage+","desc":"+5% Melee Damage.","id":1},{"x":690,"y":178,"type":"default","region":"support","name":"Attentive Ministry","tag":"support","desc":"Allies in coherency gain +5% Toughness from all replenishment sources.","id":2},{"x":1040,"y":178,"type":"default","region":"mid","name":"Braced Litany","tag":"toughness+","desc":"+15 Toughness.","id":3},{"x":230,"y":286,"type":"default","region":"combat","name":"Kindled Ire","tag":"DoT_damage+","desc":"Soulblaze you apply deals +15% damage.","id":4},{"x":450,"y":286,"type":"default","region":"combat","name":"Keen Sight","tag":"crit_chance+","desc":"+3% Critical Hit Chance.","id":5},{"x":580,"y":286,"type":"default","region":"support","name":"Warding Hand","tag":"support","desc":"+20% revive and assist speed (stacks with base).","id":6},{"x":800,"y":286,"type":"default","region":"support","name":"Soul Thrift","tag":"soulfire_economy","desc":"-10% Soulfire cost on all Incantations.","id":7},{"x":1040,"y":286,"type":"default","region":"mid","name":"Staggering Word","tag":"stagger+","desc":"+15% Impact with all weapons.","id":8},{"x":1260,"y":286,"type":"default","region":"mid","name":"Wary Step","tag":"mobility+","desc":"+5% Movement Speed.","id":9},{"x":340,"y":394,"type":"blitz","region":"combat","name":"Dominate","tag":"do_CC","desc":"Pulls nearby mobs into an AoE and freezes them for 5s, forming an obstacle. Nearby mobs are slowed. Direct damage frees a target. Costs 1 SE.","id":10},{"x":690,"y":394,"type":"blitz","region":"support","name":"Sanctic Dome","tag":"support","desc":"Telekine Dome that halts daemonic entry. On dissipation, restores 50-100% of HP allies lost inside it. Costs 2-3 SE.","id":11},{"x":1040,"y":394,"type":"blitz","region":"mid","name":"Telekine Palm","tag":"utility","desc":"Manipulate objects at range, clear hazard patches, or extract a downed ally to your position. Costs 1-2 SE.","id":12},{"x":230,"y":502,"type":"blitzmod","region":"combat","name":"Grip of Iron","tag":"CC_duration+","desc":"Dominate holds targets for +2s.","id":13},{"x":450,"y":502,"type":"blitzmod","region":"combat","name":"Immolating Grasp","tag":"DoT_stacks+","desc":"Enemies held by Dominate gain 4 stacks of Soulblaze.","id":14},{"x":580,"y":502,"type":"blitzmod","region":"support","name":"Consecrated Ground","tag":"support","desc":"Sanctic Dome also cleanses 25% of a wound of Corruption on dissipation.","id":15},{"x":800,"y":502,"type":"blitzmod","region":"support","name":"Ember Thrift","tag":"soulfire_economy","desc":"Sanctic Dome costs 1 fewer Soul Ember.","id":16},{"x":930,"y":502,"type":"blitzmod","region":"mid","name":"Far Reach","tag":"utility","desc":"Telekine Palm range +50%. Hazard clearing radius +40%.","id":17},{"x":1150,"y":502,"type":"blitzmod","region":"mid","name":"Sundering Pull","tag":"do_CC","desc":"Extracting an ally staggers enemies along the path.","id":18},{"x":230,"y":610,"type":"default","region":"combat","name":"Anathema","tag":"damage_vs_daemon+","desc":"+20% damage to Daemonhosts and Infested.","id":19},{"x":450,"y":610,"type":"default","region":"combat","name":"Searing Focus","tag":"DoT_stacks+","desc":"Critical hits apply 2 stacks of Soulblaze.","id":20},{"x":690,"y":610,"type":"stat","region":"support","name":"Toughness Boost","tag":"toughness+","desc":"+20 Toughness.","id":21},{"x":580,"y":610,"type":"default","region":"support","name":"Litany Unbroken","tag":"incantation_power+","desc":"Single-target Incantations restore an extra 8% Toughness.","id":22},{"x":1040,"y":610,"type":"default","region":"mid","name":"Cowing Presence","tag":"suppression+","desc":"Staggering an enemy suppresses others within 4m.","id":23},{"x":1260,"y":610,"type":"default","region":"mid","name":"White Noise","tag":"suppression+","desc":"Suppression you inflict lasts 1.5s longer, and suppressed shooters move 15% slower.","id":24},{"x":340,"y":718,"type":"aura","region":"combat","name":"Psyniscience","tag":"utility","desc":"Specialists and Disablers within 25m are outlined for all allies in coherency, through walls.","id":25},{"x":690,"y":718,"type":"aura","region":"support","name":"Unyielding Vigil","tag":"support","desc":"Allies in coherency gain +15% Toughness from all replenishment; downed allies lose downed-health 25% slower.","id":26},{"x":1040,"y":718,"type":"aura","region":"mid","name":"Litany of Abjuration","tag":"support","desc":"Allies in coherency: +25% Corruption resistance; DoTs on them expire 30% faster.","id":27},{"x":340,"y":826,"type":"ability","region":"combat","name":"Dome of Banishment","tag":"DoT_damage+","desc":"Pulls non-boss enemies into an AoE and applies 10 Soulblaze, +5 per ally also inside.","id":28},{"x":690,"y":826,"type":"ability","region":"support","name":"Distort Vision","tag":"utility","desc":"Invisible for 7s and spawn an improved decoy that absorbs aggro. Support Incantations do not break stealth until they resolve.","id":29},{"x":1040,"y":826,"type":"ability","region":"mid","name":"Telekine Fling","tag":"do_CC","desc":"Grip, lift and hurl a human-sized enemy. Charge time and swing width set distance and AoE. Impact kills the thrown target and staggers everything it hits.","id":30},{"x":230,"y":934,"type":"abilmod","region":"combat","name":"Widening Gyre","tag":"DoT_stacks+","desc":"Dome of Banishment applies +4 Soulblaze per ally inside.","id":31},{"x":450,"y":934,"type":"abilmod","region":"combat","name":"Hungering Dome","tag":"soulfire_on_kill","desc":"Enemies dying inside Dome of Banishment each grant Soulfire.","id":32},{"x":580,"y":934,"type":"abilmod","region":"support","name":"Lingering Shade","tag":"support","desc":"Distort Vision decoy lasts +4s and taunts nearby enemies.","id":33},{"x":800,"y":934,"type":"abilmod","region":"support","name":"Veiled Ministry","tag":"incantation_power+","desc":"Incantations cast from stealth cost 40% less Soulfire.","id":34},{"x":930,"y":934,"type":"abilmod","region":"mid","name":"Wider Arc","tag":"do_CC","desc":"Telekine Fling ballistic throws gain +50% impact radius.","id":35},{"x":1150,"y":934,"type":"abilmod","region":"mid","name":"Unburdened Grip","tag":"ability_cooldown+","desc":"Killing the thrown target refunds 20% Ability cooldown.","id":36},{"x":340,"y":1042,"type":"abilmod","region":"combat","name":"Banishment Echo","tag":"ability_cooldown+","desc":"Dome of Banishment cooldown -20%.","id":37},{"x":690,"y":1042,"type":"abilmod","region":"support","name":"Parting Pulse","tag":"do_CC","desc":"Decoy's expiry pulse staggers in a 8m radius and restores 15% Toughness to allies in it.","id":38},{"x":1040,"y":1042,"type":"abilmod","region":"mid","name":"Second Grip","tag":"ability_charges+","desc":"+1 charge of Telekine Fling.","id":39},{"x":120,"y":1042,"type":"stat","region":"combat","name":"Melee Damage Boost","tag":"melee_damage+","desc":"+10% Melee Damage.","id":40},{"x":1260,"y":1042,"type":"stat","region":"mid","name":"Impact Boost","tag":"stagger+","desc":"+10% Impact.","id":41},{"x":230,"y":1150,"type":"default","region":"combat","name":"Zealot's Cadence","tag":"attack_speed+","desc":"+8% Attack Speed after a Soulblaze kill.","id":42},{"x":450,"y":1150,"type":"default","region":"combat","name":"Rent Faith","tag":"rending+","desc":"+10% Rending against burning enemies.","id":43},{"x":580,"y":1150,"type":"default","region":"support","name":"Deeper Communion","tag":"incantation_slot_point","desc":"Counts toward unlocking your Level II Incantation slot.","id":44},{"x":800,"y":1150,"type":"default","region":"support","name":"Unstinting Hand","tag":"support","desc":"Incantations cast on an ally below 50% HP also grant them +20% damage resistance for 5s.","id":45},{"x":930,"y":1150,"type":"default","region":"mid","name":"Breaking Word","tag":"vulnerability_debuff","desc":"Staggered enemies take +8% damage from all sources.","id":46},{"x":1150,"y":1150,"type":"default","region":"mid","name":"Toll of Control","tag":"toughness_on_CC","desc":"Staggering an Elite restores 8% Toughness.","id":47},{"x":120,"y":1258,"type":"default","region":"combat","name":"Pyre Unbound","tag":"DoT_damage+","desc":"Soulblaze stacks past the normal cap, to 12.","id":48},{"x":340,"y":1258,"type":"default","region":"combat","name":"Weakspot Doctrine","tag":"weakspot_damage+","desc":"+15% Weakspot Damage.","id":49},{"x":690,"y":1258,"type":"default","region":"support","name":"Wider Communion","tag":"aura_radius+","desc":"+35% coherency radius. You also see exact HP and Toughness values on allies, not just cues.","id":50},{"x":580,"y":1258,"type":"default","region":"support","name":"Vigil Eternal","tag":"support","desc":"Reviving an ally restores 30% Toughness to every ally in coherency. Allies in coherency also take -5% damage while you are above 50% Peril.","id":51},{"x":1040,"y":1258,"type":"default","region":"mid","name":"Seal the Breach","tag":"peril_safety","desc":"Consumes 2 Soul Embers to negate a Peril Overload, venting 50% Peril and staggering within 5m. 20s lockout. Will not fire while holding Quell.","id":52},{"x":1260,"y":1258,"type":"default","region":"mid","name":"Confound","tag":"do_CC","desc":"Elites and Monstrosities you stagger stay staggered 50% longer and cannot call for reinforcements while staggered.","id":53},{"x":120,"y":610,"type":"default","region":"combat","name":"Ember Draught","tag":"soulfire_on_kill","desc":"Melee kills generate Soulfire.","id":54},{"x":1260,"y":718,"type":"default","region":"mid","name":"Weapon Jinx","tag":"do_CC","desc":"Enemies you stagger attack 20% slower for 3s.","id":55},{"x":690,"y":1150,"type":"default","region":"support","name":"Patient Litany","tag":"soulfire_economy","desc":"Soulfire regenerates 25% faster while no ally is below 50% Toughness.","id":56},{"x":340,"y":1150,"type":"default","region":"combat","name":"Ranged Doctrine","tag":"ranged_damage+","desc":"+8% Ranged Damage.","id":57},{"x":120,"y":1150,"type":"default","region":"combat","name":"Wrathful Cadence","tag":"attack_speed+","desc":"+6% Attack Speed while burning enemies are nearby.","id":58},{"x":1040,"y":1150,"type":"stat","region":"mid","name":"Toughness Boost","tag":"toughness+","desc":"+20 Toughness.","id":59},{"x":230,"y":1258,"type":"default","region":"combat","name":"Kindler","tag":"DoT_stacks+","desc":"Heavy attacks apply 1 stack of Soulblaze.","id":60},{"x":450,"y":1258,"type":"default","region":"combat","name":"Immolate","tag":"DoT_damage+","desc":"Soulblaze spreads to a nearby enemy when its target dies.","id":61},{"x":800,"y":1258,"type":"default","region":"support","name":"Unspoken Rite","tag":"incantation_power+","desc":"AoE Incantations affect an extra 3m, and Corruption-removing Incantations remove an extra 10% of a wound.","id":62},{"x":930,"y":1258,"type":"default","region":"mid","name":"Grim Composure","tag":"toughness+","desc":"+10% Toughness Damage Reduction while above 75% Peril.","id":63},{"x":1150,"y":1258,"type":"default","region":"mid","name":"Measured Force","tag":"toughness_on_CC","desc":"Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%.","id":64},{"x":285,"y":1366,"type":"keystone","region":"combat","name":"Vessel of Sorrows","tag":"combat_keystone","desc":"Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember.","id":65},{"x":175,"y":1474,"type":"keymod","region":"combat","name":"Ashen Crown","tag":"crit_chance+","desc":"Each Soulblaze tier grants +4% Critical Hit Chance.","id":66},{"x":285,"y":1474,"type":"keymod","region":"combat","name":"Unspent Wrath","tag":"DoT_damage+","desc":"Each Soulblaze tier grants +8% damage to burning targets.","id":67},{"x":395,"y":1474,"type":"keymod","region":"combat","name":"Cinder Hoard","tag":"soulfire_on_kill","desc":"Soulblaze kills generate +30% Soulfire.","id":68},{"x":230,"y":1582,"type":"keymod","region":"combat","name":"Wrath Sustained","tag":"DoT_stacks+","desc":"Soulblaze tiers decay one step slower.","id":69},{"x":340,"y":1582,"type":"keymod","region":"combat","name":"Last Ember","tag":"crit_chance+","desc":"+10% Critical Hit Chance while at 3/3 Soul Embers.","id":70},{"x":285,"y":1690,"type":"keymod","region":"combat","name":"Final Pyre","tag":"DoT_damage+","desc":"Soulblaze on Elites deals +25% damage.","id":71},{"x":690,"y":1366,"type":"keystone","region":"support","name":"Sanctic Bond","tag":"support_keystone","desc":"Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss.","id":72},{"x":580,"y":1474,"type":"keymod","region":"support","name":"Willing Burden","tag":"damage_absorb","desc":"Absorb an additional 10% of allies' incoming damage.","id":73},{"x":690,"y":1474,"type":"keymod","region":"support","name":"Tempered Vessel","tag":"toughness+","desc":"+20% Toughness Damage Reduction while Sanctic Bond is active.","id":74},{"x":800,"y":1474,"type":"keymod","region":"support","name":"Vow Unbroken","tag":"incantation_slot_point","desc":"Counts toward unlocking your Level III Incantation slot.","id":75},{"x":635,"y":1582,"type":"keymod","region":"support","name":"Shared Suffering","tag":"damage_absorb","desc":"Absorbed damage is split evenly across all bonded allies rather than paid by you alone.","id":76},{"x":745,"y":1582,"type":"keymod","region":"support","name":"Anchored Faith","tag":"support","desc":"Bonded allies cannot be reduced below 1 HP by a single hit once per 60s.","id":77},{"x":690,"y":1690,"type":"keymod","region":"support","name":"Martyr's Ledger","tag":"damage_absorb","desc":"Peril gained from Sanctic Bond is halved.","id":78},{"x":1095,"y":1366,"type":"keystone","region":"mid","name":"Weaken the Veil","tag":"hybrid_keystone","desc":"Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die.","id":79},{"x":985,"y":1474,"type":"keymod","region":"mid","name":"Rites of Unmaking","tag":"vulnerability_debuff","desc":"Unhallowed enemies take an additional +10% damage.","id":80},{"x":1095,"y":1474,"type":"keymod","region":"mid","name":"Warden's Toll","tag":"soulfire_on_CC","desc":"Unhallowed enemies grant +50% Soulfire on death.","id":81},{"x":1205,"y":1474,"type":"keymod","region":"mid","name":"Spreading Doubt","tag":"do_CC","desc":"Killing an Unhallowed enemy staggers others within 5m.","id":82},{"x":1040,"y":1582,"type":"keymod","region":"mid","name":"Hollow Ranks","tag":"suppression+","desc":"Unhallowed enemies suppress their neighbours.","id":83},{"x":1150,"y":1582,"type":"keymod","region":"mid","name":"Steady Hand","tag":"ability_cooldown+","desc":"-15% Ability cooldown while any Unhallowed enemy lives.","id":84},{"x":1095,"y":1690,"type":"keymod","region":"mid","name":"Silence the Choir","tag":"do_CC","desc":"Unhallowed Specialists are silenced: they cannot use ranged or special attacks.","id":85}],"edges":[[0,2],[1,4],[1,5],[1,6],[2,5],[2,6],[2,7],[3,7],[3,8],[3,9],[4,10],[5,10],[6,11],[7,11],[8,12],[9,12],[10,13],[10,14],[10,15],[11,14],[11,15],[11,16],[11,17],[12,16],[12,17],[12,18],[13,19],[13,54],[14,19],[14,20],[14,22],[15,20],[15,21],[15,22],[16,21],[17,23],[18,23],[18,24],[19,25],[20,25],[21,26],[22,21],[22,26],[23,27],[23,55],[24,27],[24,55],[25,28],[26,29],[27,30],[28,31],[28,32],[28,33],[29,32],[29,33],[29,34],[29,35],[30,34],[30,35],[30,36],[31,37],[31,40],[32,37],[33,38],[34,38],[35,39],[36,39],[36,41],[37,42],[37,43],[37,44],[37,57],[37,58],[38,43],[38,44],[38,45],[38,46],[38,56],[39,45],[39,46],[39,47],[39,59],[40,42],[40,57],[40,58],[41,47],[41,59],[42,48],[42,49],[42,57],[42,60],[43,61],[44,50],[44,51],[44,56],[45,62],[46,52],[46,59],[46,63],[47,53],[47,64],[48,60],[48,65],[49,61],[49,65],[50,62],[50,72],[51,50],[51,72],[52,64],[52,79],[53,79],[54,19],[54,25],[55,30],[56,45],[56,50],[56,51],[56,62],[57,43],[57,49],[57,60],[57,61],[58,42],[58,48],[59,47],[59,52],[59,53],[59,63],[59,64],[60,49],[60,65],[62,72],[63,52],[64,53],[64,79],[65,66],[65,67],[65,68],[66,69],[67,69],[67,70],[68,70],[69,71],[70,71],[72,73],[72,74],[72,75],[73,76],[74,76],[74,77],[75,77],[76,78],[77,78],[79,80],[79,81],[79,82],[80,83],[81,83],[81,84],[82,84],[83,85],[84,85]]};
 
-function avail(i){return i===0||par[i].some(p=>owned.has(p))}
-function connectedWithout(i){ // refund only if remaining set stays connected to root
-  const s=new Set(owned);s.delete(i);const seen=new Set([0]),q=[0];
-  while(q.length){const v=q.pop();for(const k of kids[v])if(s.has(k)&&!seen.has(k)){seen.add(k);q.push(k)}}
-  return seen.size===s.size;
+const W = 1380, H = 1920, PAD = 60;
+const SH = {root:20,keystone:19,ability:17,blitz:16,aura:16,keymod:12,abilmod:12,blitzmod:12,stat:11,default:13};
+const SQUARE = ['keystone','ability','blitz','aura','root'];
+const TYPES = ['root','keystone','keymod','ability','abilmod','blitz','blitzmod','aura','stat','default'];
+const REGIONS = ['combat','support','mid'];
+const BANDS = [[0,510,'combat','Left \u00b7 Combat'],[510,880,'support','Centre \u00b7 Support'],[880,1380,'mid','Right \u00b7 Control']];
+const NS = 'http://www.w3.org/2000/svg';
+const MAXPTS = 30;
+
+const clone = o => JSON.parse(JSON.stringify(o));
+const $ = id => document.getElementById(id);
+
+/* ------------------------------------------------------------------ *
+ * Save file
+ *
+ * Both the browser copy and the downloaded file use one envelope:
+ *
+ *   { "format": "darktide.talent-page",   // never changes
+ *     "version": 1,                       // envelope version
+ *     "savedAt": "2026-01-01T00:00:00Z",
+ *     "page": "Exorcist talent tree",
+ *     "data": {
+ *       "tree": { "version": 1, "nodes": [...], "edges": [...] }
+ *       // every future feature adds its own key here, with its own version
+ *     } }
+ *
+ * Rules that keep old files working:
+ *   - A section this build knows about but the file lacks falls back to its
+ *     built-in default, so old files keep loading after new features land.
+ *   - A section the file carries but this build has never heard of is parked
+ *     in `foreign` untouched and written straight back out on the next
+ *     export, so an older page can never silently eat a newer file's data.
+ *   - A bare { nodes, edges } file (the original tree.json) is still accepted
+ *     and read as a v1 tree section.
+ * ------------------------------------------------------------------ */
+const STORE_PREFIX = 'darktide.exorcist.';
+const STORE_KEY = STORE_PREFIX + 'doc.v1';
+const LEGACY_TREE_KEY = STORE_PREFIX + 'tree.v1';
+const FILE_FORMAT = 'darktide.talent-page';
+const FILE_VERSION = 1;
+
+let storageOK = true;
+let T = null;               // the tree section's payload
+let foreign = {};           // sections from a newer build, kept verbatim
+let docMeta = {};
+
+/* --- section registry: one entry per chunk of page state --- */
+const SECTIONS = {};
+function defineSection(name, def){ SECTIONS[name] = def; }
+
+defineSection('tree', {
+  version: 1,
+  read(){ return {nodes: T.nodes, edges: T.edges}; },
+  write(payload /*, version */){
+    const t = {nodes: clone(payload.nodes || []), edges: clone(payload.edges || [])};
+    if(!t.nodes.length) throw new Error('the tree section has no nodes');
+    T = t;
+  },
+  reset(){ T = clone(DEFAULT_TREE); }
+});
+
+/* Adding page state later looks like this — nothing else has to change:
+ *
+ *   defineSection('loadouts', {
+ *     version: 1,
+ *     read(){ return {saved: loadouts}; },
+ *     write(payload, version){ loadouts = version < 2 ? upgrade(payload) : payload.saved; },
+ *     reset(){ loadouts = []; }
+ *   });
+ *
+ * Bump a section's own `version` when its shape changes and branch on the
+ * `version` argument in write() to bring older payloads forward.
+ */
+
+function buildDoc(){
+  const doc = {
+    format: FILE_FORMAT,
+    version: FILE_VERSION,
+    savedAt: new Date().toISOString(),
+    page: 'Exorcist talent tree',
+    data: {}
+  };
+  for(const k in foreign) doc.data[k] = foreign[k];          // pass unknown sections through
+  for(const k in SECTIONS) doc.data[k] = Object.assign({version: SECTIONS[k].version}, SECTIONS[k].read());
+  return doc;
 }
-function build(){
-  const bands=[[0,510,'combat','Left &middot; Combat'],[510,880,'support','Centre &middot; Support'],[880,1380,'mid','Right &middot; Control']];
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Exorcist talent tree">`;
-  bands.forEach(([x0,x1,c,lab])=>{
-    s+=`<rect x="${x0}" y="0" width="${x1-x0}" height="${H}" fill="var(--${c})" opacity="0.035"/>`;
-    s+=`<g class="band"><text x="${(x0+x1)/2}" y="34" text-anchor="middle" fill="var(--${c})">${lab}</text></g>`;
+
+function readDoc(raw){
+  if(!raw || typeof raw !== 'object') throw new Error('the file is not a JSON object');
+  if(!raw.data && Array.isArray(raw.nodes) && Array.isArray(raw.edges))   // original tree.json
+    return {format:FILE_FORMAT, version:FILE_VERSION, page:'Exorcist talent tree',
+            data:{tree:{version:1, nodes:raw.nodes, edges:raw.edges}}};
+  if(!raw.data || typeof raw.data !== 'object') throw new Error('there is no data block in it');
+  return raw;
+}
+
+function applyDoc(doc){
+  const data = doc.data;
+  const next = {};
+  for(const k in data) if(!SECTIONS[k]) next[k] = clone(data[k]);
+  for(const k in SECTIONS){
+    const s = SECTIONS[k], p = data[k];
+    if(p) s.write(p, +p.version || 1); else s.reset();
+  }
+  foreign = next;
+  docMeta = {format:doc.format, version:+doc.version || 1, savedAt:doc.savedAt};
+}
+
+function loadStored(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY) || localStorage.getItem(LEGACY_TREE_KEY);
+    return raw ? readDoc(JSON.parse(raw)) : null;
+  }catch(err){ return null; }
+}
+function wipeStorage(){
+  try{
+    Object.keys(localStorage)
+      .filter(k => k.indexOf(STORE_PREFIX) === 0)
+      .forEach(k => localStorage.removeItem(k));
+  }catch(err){ storageOK = false; }
+}
+let saveTimer = null;
+function save(now){
+  clearTimeout(saveTimer);
+  const write = () => {
+    try{
+      localStorage.setItem(STORE_KEY, JSON.stringify(buildDoc()));
+      localStorage.removeItem(LEGACY_TREE_KEY);
+      storageOK = true;
+    }catch(err){
+      storageOK = false;
+      toast('This browser refused to store the tree. Download the file to keep your work.');
+    }
+    stat();
+  };
+  if(now) write(); else saveTimer = setTimeout(write, 300);
+}
+
+/* ---------------- model ---------------- */
+const storedDoc = loadStored();
+let freshStart = !storedDoc;
+if(storedDoc){
+  try{ applyDoc(storedDoc); }
+  catch(err){ T = null; freshStart = true; }
+}
+if(!T){ foreign = {}; SECTIONS.tree.reset(); }
+
+let byId = {}, adj = {}, inc = {}, ROOT = 0;
+function reindex(){
+  byId = {}; adj = {}; inc = {};
+  let next = 0;
+  T.nodes.forEach(n => {
+    if(typeof n.id !== 'number' || byId[n.id] !== undefined) n.id = next;
+    next = Math.max(next, n.id + 1);
+    n.x = +n.x || 0; n.y = +n.y || 0;
+    n.name = n.name || 'Unnamed'; n.desc = n.desc || ''; n.tag = n.tag || '';
+    if(TYPES.indexOf(n.type) < 0) n.type = 'default';
+    if(REGIONS.indexOf(n.region) < 0) n.region = 'combat';
+    byId[n.id] = n; adj[n.id] = []; inc[n.id] = [];
   });
-  E.forEach(([a,b],i)=>{
-    s+=`<line class="wire" id="w${i}" x1="${N[a].x+PAD}" y1="${N[a].y}" x2="${N[b].x+PAD}" y2="${N[b].y}"/>`;
+  T.edges = T.edges
+    .map(e => Array.isArray(e) ? [e[0], e[1]] : [e.a, e.b])
+    .filter(e => byId[e[0]] && byId[e[1]] && e[0] !== e[1]);
+  T.edges.forEach(([a,b], i) => { adj[a].push(b); adj[b].push(a); inc[a].push(i); inc[b].push(i); });
+  const r = T.nodes.find(n => n.type === 'root');
+  ROOT = r ? r.id : T.nodes[0].id;
+}
+reindex();
+if(freshStart) save(true);
+
+const owned = new Set([ROOT]);
+let filt = '';
+
+function avail(id){ return id === ROOT || adj[id].some(p => owned.has(p)); }
+function connectedWithout(id){          // refund only if the rest stays joined to the root
+  const s = new Set(owned); s.delete(id);
+  const seen = new Set([ROOT]), q = [ROOT];
+  while(q.length){
+    const v = q.pop();
+    for(const k of adj[v]) if(s.has(k) && !seen.has(k)){ seen.add(k); q.push(k); }
+  }
+  return seen.size === s.size;
+}
+
+/* ---------------- edit state ---------------- */
+let mode = 'build';                 // 'build' | 'edit'
+let selNode = null, selEdge = null; // ids / edge index
+let hoverNode = null;
+let pending = null;                 // {edge, end, anchor, before} — a link end following the cursor
+let drag = null;
+const undoStack = [];
+function pushUndo(snap){
+  undoStack.push({tree: snap || clone(T), foreign: clone(foreign)});
+  if(undoStack.length > 60) undoStack.shift();
+}
+
+/* ---------------- svg build ---------------- */
+let svg, gEdges, gNodes, gOver, ghost;
+const nodeEls = {}, edgeEls = [];
+let handles = [];
+
+function el(tag, attrs){
+  const e = document.createElementNS(NS, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+const radius = n => SH[n.type] || 13;
+const cx = n => n.x + PAD;
+
+function render(){
+  reindex();
+  for(const k in nodeEls) delete nodeEls[k];
+  edgeEls.length = 0;
+  const host = $('host'); host.textContent = '';
+
+  svg = el('svg', {viewBox:`0 0 ${W} ${H}`, width:W, height:H, role:'img', 'aria-label':'Exorcist talent tree'});
+  const gBands = el('g', {});
+  BANDS.forEach(([x0,x1,c,lab]) => {
+    gBands.appendChild(el('rect', {x:x0, y:0, width:x1-x0, height:H, fill:`var(--${c})`, opacity:0.035}));
+    const g = el('g', {class:'band'});
+    const t = el('text', {x:(x0+x1)/2, y:34, 'text-anchor':'middle', fill:`var(--${c})`});
+    t.textContent = lab; g.appendChild(t); gBands.appendChild(g);
   });
-  N.forEach((n,i)=>{
-    const r=SH[n.type]||13, sq=['keystone','ability','blitz','aura','root'].includes(n.type);
-    const shape = sq
-      ? `<rect class="bg" x="${n.x+PAD-r}" y="${n.y-r}" width="${2*r}" height="${2*r}" rx="3"/>`
-      : `<circle class="bg" cx="${n.x+PAD}" cy="${n.y}" r="${r}"/>`;
-    s+=`<g class="nd ${n.region}" id="n${i}" tabindex="0" role="button" aria-label="${n.name}">
-      ${shape}
-      <circle class="hit" cx="${n.x+PAD}" cy="${n.y}" r="${r+8}"/>
-      <text class="lbl" x="${n.x+PAD}" y="${n.y+r+13}">${n.name}</text></g>`;
+  gEdges = el('g', {}); gNodes = el('g', {}); gOver = el('g', {});
+  svg.append(gBands, gEdges, gNodes, gOver);
+
+  T.edges.forEach((e, i) => {
+    const g = el('g', {class:'edge'});
+    const hit = el('line', {class:'ehit'});
+    const line = el('line', {class:'wire'});
+    g.append(hit, line); gEdges.appendChild(g);
+    edgeEls[i] = {g, hit, line};
+    hit.addEventListener('pointerdown', ev => {
+      if(mode !== 'edit' || pending) return;
+      ev.stopPropagation(); selectEdge(i);
+    });
+    positionEdge(i);
   });
-  document.getElementById('host').innerHTML=s+'</svg>';
-  svg=document.querySelector('svg');
-  N.forEach((n,i)=>{
-    const g=document.getElementById('n'+i);
-    g.addEventListener('click',()=>toggle(i));
-    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(i)}});
-    g.addEventListener('mouseenter',e=>show(e,n));
-    g.addEventListener('mousemove',e=>place(e));
-    g.addEventListener('mouseleave',()=>{tip.style.opacity=0});
-    g.addEventListener('focus',e=>show({clientX:g.getBoundingClientRect().right,clientY:g.getBoundingClientRect().top},n));
-    g.addEventListener('blur',()=>{tip.style.opacity=0});
+
+  T.nodes.forEach(n => {
+    const g = el('g', {class:'nd ' + n.region, tabindex:0, role:'button', 'data-id':n.id});
+    g.setAttribute('aria-label', n.name);
+    const sq = SQUARE.includes(n.type);
+    const shape = el(sq ? 'rect' : 'circle', {class:'bg'});
+    if(sq) shape.setAttribute('rx', 3);
+    const hit = el('circle', {class:'hit'});
+    const lbl = el('text', {class:'lbl'});
+    lbl.textContent = n.name;
+    g.append(shape, hit, lbl); gNodes.appendChild(g);
+    nodeEls[n.id] = {g, shape, hit, lbl, sq};
+    wireNode(n.id, g);
+    positionNode(n.id);
   });
-  const tags=[...new Set(N.map(n=>n.tag))].sort();
-  document.getElementById('filt').innerHTML='<option value="">none</option>'+tags.map(t=>`<option>${t}</option>`).join('');
+
+  ghost = el('line', {class:'wire ghost', visibility:'hidden'});
+  gOver.appendChild(ghost);
+
+  svg.addEventListener('pointerdown', ev => {
+    if(mode !== 'edit') return;
+    if(ev.target === svg || ev.target.tagName === 'rect' && ev.target.getAttribute('opacity')){
+      if(pending) cancelPending(); else clearSelection();
+    }
+  });
+  host.appendChild(svg);
+
+  const tags = [...new Set(T.nodes.map(n => n.tag))].sort();
+  const sel = $('filt'), keep = filt;
+  sel.textContent = '';
+  sel.appendChild(new Option('none',''));
+  tags.forEach(t => sel.appendChild(new Option(t, t)));
+  sel.value = tags.includes(keep) ? keep : (filt = '', '');
+
+  drawHandles();
   paint();
+  stat();
 }
-function toggle(i){
-  if(i===0)return;
-  if(owned.has(i)){ if(connectedWithout(i)){owned.delete(i);paint()} return }
-  if(owned.size-1>=30) return;
-  if(avail(i)){owned.add(i);paint()}
+
+function positionNode(id){
+  const n = byId[id], o = nodeEls[id];
+  if(!o) return;
+  const r = radius(n), x = cx(n);
+  if(o.sq) { o.shape.setAttribute('x', x-r); o.shape.setAttribute('y', n.y-r);
+             o.shape.setAttribute('width', 2*r); o.shape.setAttribute('height', 2*r); }
+  else     { o.shape.setAttribute('cx', x); o.shape.setAttribute('cy', n.y); o.shape.setAttribute('r', r); }
+  o.hit.setAttribute('cx', x); o.hit.setAttribute('cy', n.y); o.hit.setAttribute('r', r+8);
+  o.lbl.setAttribute('x', x); o.lbl.setAttribute('y', n.y + r + 13);
 }
-function show(e,n){
-  tip.className=n.region;
-  tip.innerHTML=`<h3>${n.name}</h3><div class="tag">${n.tag} &middot; ${n.type}</div><p>${n.desc}</p>`;
-  tip.style.opacity=1; place(e);
+
+function positionEdge(i){
+  const e = T.edges[i], o = edgeEls[i];
+  if(!o) return;
+  const a = byId[e[0]], b = byId[e[1]];
+  const loose = pending && pending.edge === i;
+  const p0 = loose && pending.end === 0 ? pending.pt : {x:cx(a), y:a.y};
+  const p1 = loose && pending.end === 1 ? pending.pt : {x:cx(b), y:b.y};
+  [o.hit, o.line].forEach(l => {
+    l.setAttribute('x1', p0.x); l.setAttribute('y1', p0.y);
+    l.setAttribute('x2', p1.x); l.setAttribute('y2', p1.y);
+  });
+  o.line.classList.toggle('sel', selEdge === i);
+  o.line.classList.toggle('ghost', !!loose);
+}
+
+/* ---------------- link handles ---------------- */
+function handlePos(i, end){
+  const e = T.edges[i];
+  const a = byId[e[end]], b = byId[e[1-end]];
+  const ax = cx(a), ay = a.y;
+  const bx = (pending && pending.edge === i && pending.end === 1-end) ? pending.pt.x : cx(b);
+  const by = (pending && pending.edge === i && pending.end === 1-end) ? pending.pt.y : b.y;
+  let dx = bx-ax, dy = by-ay;
+  const len = Math.hypot(dx, dy) || 1;
+  const d = Math.min(radius(a) + 7, len * 0.42);
+  return {x: ax + dx/len*d, y: ay + dy/len*d};
+}
+function visibleEdges(){
+  if(mode !== 'edit') return [];
+  if($('opt-handles').checked) return T.edges.map((_, i) => i);
+  const set = new Set();
+  if(hoverNode !== null) inc[hoverNode].forEach(i => set.add(i));
+  if(selNode !== null) inc[selNode].forEach(i => set.add(i));
+  if(selEdge !== null) set.add(selEdge);
+  if(pending && pending.edge !== null) set.add(pending.edge);
+  return [...set];
+}
+function drawHandles(){
+  handles.forEach(h => h.el.remove());
+  handles = [];
+  visibleEdges().forEach(i => {
+    [0,1].forEach(end => {
+      const loose = pending && pending.edge === i && pending.end === end;
+      const p = loose ? pending.pt : handlePos(i, end);
+      const c = el('circle', {class:'handle' + (loose ? ' loose' : ''), cx:p.x, cy:p.y, r:5.5});
+      c.addEventListener('pointerdown', ev => { ev.stopPropagation(); ev.preventDefault(); grabEnd(i, end, ev); });
+      gOver.appendChild(c);
+      handles.push({el:c, edge:i, end});
+    });
+  });
+}
+function moveHandles(){
+  handles.forEach(h => {
+    const loose = pending && pending.edge === h.edge && pending.end === h.end;
+    const p = loose ? pending.pt : handlePos(h.edge, h.end);
+    h.el.setAttribute('cx', p.x); h.el.setAttribute('cy', p.y);
+  });
+}
+
+/* ---------------- pointer plumbing ---------------- */
+function toSvg(ev){
+  const p = svg.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+function wireNode(id, g){
+  g.addEventListener('pointerdown', ev => {
+    if(mode === 'build') return;
+    ev.preventDefault();
+    if(pending){ attachTo(id); return; }
+    const n = byId[id], p = toSvg(ev);
+    drag = {id, dx: cx(n) - p.x, dy: n.y - p.y, x0: ev.clientX, y0: ev.clientY, moved:false, snap: clone(T)};
+    g.classList.add('drag');
+    g.setPointerCapture(ev.pointerId);
+    document.body.classList.add('dragging');
+  });
+  g.addEventListener('pointermove', ev => {
+    if(!drag || drag.id !== id) return;
+    const p = toSvg(ev), n = byId[id];
+    let x = p.x + drag.dx, y = p.y + drag.dy;
+    if($('opt-snap').checked){ x = Math.round(x/10)*10; y = Math.round(y/10)*10; }
+    x = Math.max(16, Math.min(W-16, x)); y = Math.max(16, Math.min(H-16, y));
+    if(Math.hypot(ev.clientX - drag.x0, ev.clientY - drag.y0) > 3) drag.moved = true;
+    n.x = x - PAD; n.y = y;
+    positionNode(id); inc[id].forEach(positionEdge); moveHandles();
+    if(selNode === id){ $('f-x').value = Math.round(n.x); $('f-y').value = Math.round(n.y); }
+  });
+  const end = ev => {
+    if(!drag || drag.id !== id) return;
+    g.classList.remove('drag');
+    document.body.classList.remove('dragging');
+    if(drag.moved){ pushUndo(drag.snap); save(); }
+    else selectNode(id);
+    drag = null;
+  };
+  g.addEventListener('pointerup', end);
+  g.addEventListener('pointercancel', end);
+
+  g.addEventListener('click', () => { if(mode === 'build') toggle(id); });
+  g.addEventListener('keydown', e => {
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    if(mode === 'build') toggle(id); else if(pending) attachTo(id); else selectNode(id);
+  });
+  g.addEventListener('mouseenter', ev => {
+    hoverNode = id;
+    if(mode === 'build') show(ev, byId[id]); else drawHandles();
+  });
+  g.addEventListener('mousemove', ev => { if(mode === 'build') place(ev); });
+  g.addEventListener('mouseleave', () => {
+    hoverNode = null; $('tip').style.opacity = 0;
+    if(mode === 'edit') drawHandles();
+  });
+  g.addEventListener('focus', () => {
+    if(mode !== 'build') return;
+    const r = g.getBoundingClientRect();
+    show({clientX:r.right, clientY:r.top}, byId[id]);
+  });
+  g.addEventListener('blur', () => { $('tip').style.opacity = 0; });
+}
+
+/* ---------------- link re-attachment ---------------- */
+function grabEnd(i, end, ev){
+  pending = {edge:i, end, anchor:T.edges[i][1-end], pt:toSvg(ev), before:clone(T)};
+  selEdge = i; selNode = null;
+  markPickTargets(); inspector(); positionEdge(i); drawHandles();
+  toast('Now click the node this end should attach to. Esc puts it back.');
+}
+function startNewLink(fromId){
+  pending = {edge:null, end:1, anchor:fromId, pt:{x:cx(byId[fromId]), y:byId[fromId].y}, before:clone(T)};
+  markPickTargets(); drawHandles();
+  ghost.setAttribute('visibility','visible');
+  updateGhost();
+  toast('Click the node this link should run to. Esc cancels.');
+}
+function updateGhost(){
+  if(!pending || pending.edge !== null){ ghost.setAttribute('visibility','hidden'); return; }
+  const a = byId[pending.anchor];
+  ghost.setAttribute('x1', cx(a)); ghost.setAttribute('y1', a.y);
+  ghost.setAttribute('x2', pending.pt.x); ghost.setAttribute('y2', pending.pt.y);
+}
+function markPickTargets(){
+  T.nodes.forEach(n => {
+    const on = !!pending && n.id !== pending.anchor;
+    nodeEls[n.id].g.classList.toggle('pick', on);
+  });
+}
+function attachTo(id){
+  if(!pending) return;
+  if(id === pending.anchor){ toast('A link needs two different nodes.'); return; }
+  const other = pending.anchor;
+  const dupe = T.edges.some((e, i) => i !== pending.edge &&
+    ((e[0] === id && e[1] === other) || (e[1] === id && e[0] === other)));
+  if(dupe){ toast('Those two nodes are already linked.'); return; }
+  const before = pending.before;
+  if(pending.edge === null) T.edges.push([other, id]);
+  else T.edges[pending.edge][pending.end] = id;
+  pushUndo(before);
+  pending = null;
+  ghost.setAttribute('visibility','hidden');
+  reindex(); render(); save();
+  toast('Link updated.');
+}
+function cancelPending(){
+  if(!pending) return;
+  const i = pending.edge;
+  pending = null;
+  ghost.setAttribute('visibility','hidden');
+  markPickTargets();
+  if(i !== null) positionEdge(i);
+  drawHandles();
+}
+
+/* ---------------- selection + inspector ---------------- */
+function clearSelection(){ selNode = null; selEdge = null; inspector(); repaintSel(); }
+function selectNode(id){ selNode = id; selEdge = null; inspector(); repaintSel(); }
+function selectEdge(i){ selEdge = i; selNode = null; inspector(); repaintSel(); }
+function repaintSel(){
+  T.nodes.forEach(n => nodeEls[n.id].g.classList.toggle('selnode', selNode === n.id));
+  T.edges.forEach((_, i) => edgeEls[i].line.classList.toggle('sel', selEdge === i));
+  drawHandles();
+}
+function inspector(){
+  const hasN = selNode !== null && byId[selNode], hasE = selEdge !== null && T.edges[selEdge];
+  $('insp-node').hidden = !hasN;
+  $('insp-edge').hidden = !hasE;
+  $('insp-empty').hidden = !!(hasN || hasE);
+  if(hasN){
+    const n = byId[selNode];
+    $('f-name').value = n.name; $('f-desc').value = n.desc; $('f-tag').value = n.tag;
+    $('f-type').value = n.type; $('f-region').value = n.region;
+    $('f-x').value = Math.round(n.x); $('f-y').value = Math.round(n.y);
+  }
+  if(hasE){
+    const [a,b] = T.edges[selEdge];
+    const line = (host, label, node) => {
+      host.textContent = label + ' ';
+      const s = document.createElement('b'); s.textContent = byId[node].name; host.append(s);
+    };
+    line($('edge-a'), 'From', a); line($('edge-b'), 'to', b);
+  }
+}
+
+function fieldEdit(input, apply, structural){
+  input.addEventListener('focus', () => { input._snap = clone(T); });
+  input.addEventListener('input', () => {
+    if(selNode === null) return;
+    const n = byId[selNode];
+    if(input._snap){ pushUndo(input._snap); input._snap = null; }
+    apply(n, input.value);
+    if(structural){ render(); repaintSel(); }
+    else {
+      nodeEls[n.id].lbl.textContent = n.name;
+      nodeEls[n.id].g.setAttribute('aria-label', n.name);
+      positionNode(n.id); inc[n.id].forEach(positionEdge); moveHandles();
+    }
+    save();
+  });
+}
+
+/* ---------------- build mode ---------------- */
+function toggle(id){
+  if(id === ROOT) return;
+  if(owned.has(id)){ if(connectedWithout(id)){ owned.delete(id); paint(); } return; }
+  if(owned.size - 1 >= MAXPTS) return;
+  if(avail(id)){ owned.add(id); paint(); }
+}
+function show(e, n){
+  const tip = $('tip');
+  tip.className = n.region;
+  tip.textContent = '';
+  const h = document.createElement('h3'); h.textContent = n.name;
+  const t = document.createElement('div'); t.className = 'tag'; t.textContent = `${n.tag} \u00b7 ${n.type}`;
+  const p = document.createElement('p'); p.textContent = n.desc;
+  tip.append(h, t, p);
+  tip.style.opacity = 1; place(e);
 }
 function place(e){
-  const r=tip.getBoundingClientRect();
-  let x=e.clientX+16,y=e.clientY+16;
-  if(x+r.width>innerWidth-8)x=e.clientX-r.width-16;
-  if(y+r.height>innerHeight-8)y=innerHeight-r.height-8;
-  tip.style.left=x+'px';tip.style.top=y+'px';
+  const tip = $('tip'), r = tip.getBoundingClientRect();
+  let x = e.clientX + 16, y = e.clientY + 16;
+  if(x + r.width > innerWidth - 8) x = e.clientX - r.width - 16;
+  if(y + r.height > innerHeight - 8) y = innerHeight - r.height - 8;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
 }
 function paint(){
-  const sp=owned.size-1;
-  document.getElementById('spent').textContent=sp;
-  document.getElementById('fill').style.width=(100*sp/30)+'%';
-  const reg={combat:0,mid:0,support:0};
-  owned.forEach(i=>{if(i)reg[N[i].region]++});
-  for(const k in reg)document.getElementById('r-'+k).textContent=reg[k];
-  let pts=0; owned.forEach(i=>{if(i&&(N[i].tag==='incantation_slot_point'||N[i].type==='support_keystone'||(N[i].region==='support'&&['blitz','aura','ability','keystone'].includes(N[i].type))))pts++});
-  document.getElementById('s2').className='slot'+(pts>=2?' on':'');
-  document.getElementById('s3').className='slot'+(pts>=4?' on':'');
-  N.forEach((n,i)=>{
-    const g=document.getElementById('n'+i);
-    g.classList.toggle('on',owned.has(i));
-    g.classList.toggle('avail',!owned.has(i)&&avail(i));
-    g.classList.toggle('dim',!!filt&&n.tag!==filt);
+  [...owned].forEach(id => { if(!byId[id]) owned.delete(id); });
+  owned.add(ROOT);
+  const sp = owned.size - 1;
+  $('spent').textContent = sp;
+  $('fill').style.width = (100 * sp / MAXPTS) + '%';
+  const reg = {combat:0, mid:0, support:0};
+  owned.forEach(id => { if(id !== ROOT) reg[byId[id].region]++; });
+  for(const k in reg) $('r-' + k).textContent = reg[k];
+  let pts = 0;
+  owned.forEach(id => {
+    if(id === ROOT) return;
+    const n = byId[id];
+    if(n.tag === 'incantation_slot_point' || n.type === 'support_keystone' ||
+      (n.region === 'support' && ['blitz','aura','ability','keystone'].includes(n.type))) pts++;
   });
-  E.forEach(([a,b],i)=>document.getElementById('w'+i).classList.toggle('live',owned.has(a)&&owned.has(b)));
+  $('s2').className = 'slot' + (pts >= 2 ? ' on' : '');
+  $('s3').className = 'slot' + (pts >= 4 ? ' on' : '');
+  T.nodes.forEach(n => {
+    const g = nodeEls[n.id].g;
+    g.classList.toggle('on', owned.has(n.id));
+    g.classList.toggle('avail', !owned.has(n.id) && avail(n.id));
+    g.classList.toggle('dim', !!filt && n.tag !== filt);
+  });
+  T.edges.forEach(([a,b], i) => edgeEls[i].line.classList.toggle('live', owned.has(a) && owned.has(b)));
 }
-document.getElementById('reset').onclick=()=>{owned.clear();owned.add(0);paint()};
-document.getElementById('filt').onchange=e=>{filt=e.target.value;paint()};
-build();
+
+/* ---------------- chrome ---------------- */
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = 0; }, 2600);
+}
+function stat(){
+  const extra = Object.keys(foreign).length;
+  const base = storageOK
+    ? `Stored in this browser \u00b7 ${T.nodes.length} nodes \u00b7 ${T.edges.length} links`
+    : `Not being stored \u2014 this browser blocks local storage \u00b7 ${T.nodes.length} nodes \u00b7 ${T.edges.length} links`;
+  $('stat').textContent = base + (extra ? ` \u00b7 ${extra} section(s) from a newer build kept untouched` : '');
+}
+function setMode(m){
+  mode = m;
+  $('tab-build').classList.toggle('on', m === 'build');
+  $('tab-edit').classList.toggle('on', m === 'edit');
+  $('build-panel').hidden = m !== 'build';
+  $('edit-panel').hidden = m !== 'edit';
+  document.body.classList.toggle('editing', m === 'edit');
+  $('tip').style.opacity = 0;
+  cancelPending(); clearSelection();
+  drawHandles();
+}
+
+TYPES.forEach(t => $('f-type').appendChild(new Option(t, t)));
+REGIONS.forEach(r => $('f-region').appendChild(new Option(r, r)));
+
+fieldEdit($('f-name'), (n,v) => n.name = v);
+fieldEdit($('f-desc'), (n,v) => n.desc = v);
+fieldEdit($('f-tag'),  (n,v) => n.tag = v, true);
+fieldEdit($('f-type'), (n,v) => n.type = v, true);
+fieldEdit($('f-region'), (n,v) => n.region = v, true);
+fieldEdit($('f-x'), (n,v) => { const x = parseFloat(v); if(!isNaN(x)) n.x = x; });
+fieldEdit($('f-y'), (n,v) => { const y = parseFloat(v); if(!isNaN(y)) n.y = y; });
+
+$('tab-build').onclick = () => setMode('build');
+$('tab-edit').onclick = () => setMode('edit');
+$('reset').onclick = () => { owned.clear(); owned.add(ROOT); paint(); };
+$('filt').onchange = e => { filt = e.target.value; paint(); };
+$('opt-handles').onchange = drawHandles;
+$('new-link').onclick = () => { if(selNode !== null) startNewLink(selNode); };
+$('del-link').onclick = () => {
+  if(selEdge === null) return;
+  pushUndo();
+  T.edges.splice(selEdge, 1);
+  selEdge = null;
+  render(); save(); toast('Link deleted.');
+};
+$('undo').onclick = () => {
+  if(!undoStack.length){ toast('Nothing left to undo.'); return; }
+  const step = undoStack.pop();
+  T = step.tree; foreign = step.foreign;
+  cancelPending(); selNode = selEdge = null;
+  render(); inspector(); save();
+  toast('Reverted one change.');
+};
+$('exp').onclick = () => {
+  const doc = buildDoc();
+  const blob = new Blob([JSON.stringify(doc, null, 1)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'exorcist-tree-' + doc.savedAt.slice(0,10) + '.json';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('imp-btn').onclick = () => $('imp').click();
+$('imp').onchange = ev => {
+  const f = ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const doc = readDoc(JSON.parse(r.result));
+      pushUndo();
+      wipeStorage();
+      applyDoc(doc);
+      owned.clear();
+      render(); owned.add(ROOT); paint(); clearSelection(); save(true);
+      const extra = Object.keys(foreign).length;
+      toast('Loaded ' + f.name + ', replacing the copy in this browser.' +
+        (extra ? ' It also carries ' + extra + ' section(s) this page build does not read yet — those are being kept.' : ''));
+    }catch(err){ toast('That file is not a saved talent page: ' + err.message + '.'); }
+    ev.target.value = '';
+  };
+  r.readAsText(f);
+};
+$('wipe').onclick = () => {
+  if(!confirm('Throw away every change you have made in this browser and go back to the built-in tree?')) return;
+  pushUndo();
+  wipeStorage();
+  foreign = {};
+  for(const k in SECTIONS) SECTIONS[k].reset();
+  owned.clear();
+  render(); owned.add(ROOT); paint(); clearSelection(); save(true);
+  toast('Back to the built-in tree.');
+};
+
+window.addEventListener('pointermove', ev => {
+  if(!pending || !svg) return;
+  pending.pt = toSvg(ev);
+  if(pending.edge !== null) positionEdge(pending.edge);
+  updateGhost(); moveHandles();
+});
+window.addEventListener('keydown', ev => {
+  if(ev.key === 'Escape'){ cancelPending(); return; }
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if(typing) return;
+  if((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z'){ ev.preventDefault(); $('undo').click(); return; }
+  if(mode !== 'edit') return;
+  if((ev.key === 'Delete' || ev.key === 'Backspace') && selEdge !== null){ ev.preventDefault(); $('del-link').click(); return; }
+  if(selNode !== null && ev.key.startsWith('Arrow')){
+    ev.preventDefault();
+    const step = ev.shiftKey ? 10 : 1, n = byId[selNode];
+    if(ev.key === 'ArrowLeft') n.x -= step;
+    if(ev.key === 'ArrowRight') n.x += step;
+    if(ev.key === 'ArrowUp') n.y -= step;
+    if(ev.key === 'ArrowDown') n.y += step;
+    positionNode(n.id); inc[n.id].forEach(positionEdge); moveHandles();
+    $('f-x').value = Math.round(n.x); $('f-y').value = Math.round(n.y);
+    save();
+  }
+});
+
+render();
+if(freshStart) toast('Your own copy of this tree now lives in this browser.');
 </script></body></html>
