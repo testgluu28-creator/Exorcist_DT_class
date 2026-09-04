@@ -87,12 +87,13 @@ body.editing main{background-image:radial-gradient(#232833 1px,transparent 1px);
 .ehit{stroke:transparent;stroke-width:12;fill:none}
 body.editing .ehit{cursor:pointer}
 .wire.sel{stroke:#e9edf3;stroke-width:2.4}
-.wire.ghost{stroke:var(--support);stroke-width:2.2;stroke-dasharray:6 5}
+.wire.ghost{stroke:var(--support);stroke-width:2.2;stroke-dasharray:6 5;pointer-events:none}
 .nd.pick .bg{stroke:var(--support);stroke-dasharray:3 3}
 .nd.selnode .bg{stroke:#e9edf3;stroke-width:2.6}
 .handle{fill:var(--wire-on);stroke:#0f1216;stroke-width:1.4;cursor:pointer}
 .handle:hover{fill:#fff;stroke:var(--support)}
-.handle.loose{fill:#fff}
+body.linking .handle{pointer-events:none}
+.handle.loose{fill:#fff;pointer-events:none}   /* rides under the cursor: must never eat the click meant for a node */
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0f1216;
   border:1px solid var(--hair);border-left:3px solid var(--support);padding:9px 14px;border-radius:3px;
   font-size:13px;opacity:0;transition:opacity .15s;pointer-events:none;z-index:20}
@@ -584,11 +585,13 @@ function wireNode(id, g){
 function grabEnd(i, end, ev){
   pending = {edge:i, end, anchor:T.edges[i][1-end], pt:toSvg(ev), before:clone(T)};
   selEdge = i; selNode = null;
+  document.body.classList.add('linking');
   markPickTargets(); inspector(); positionEdge(i); drawHandles();
   toast('Now click the node this end should attach to. Esc puts it back.');
 }
 function startNewLink(fromId){
   pending = {edge:null, end:1, anchor:fromId, pt:{x:cx(byId[fromId]), y:byId[fromId].y}, before:clone(T)};
+  document.body.classList.add('linking');
   markPickTargets(); drawHandles();
   ghost.setAttribute('visibility','visible');
   updateGhost();
@@ -614,6 +617,7 @@ function attachTo(id){
     ((e[0] === id && e[1] === other) || (e[1] === id && e[0] === other)));
   if(dupe){ toast('Those two nodes are already linked.'); return; }
   const before = pending.before;
+  document.body.classList.remove('linking');
   if(pending.edge === null) T.edges.push([other, id]);
   else T.edges[pending.edge][pending.end] = id;
   pushUndo(before);
@@ -626,6 +630,7 @@ function cancelPending(){
   if(!pending) return;
   const i = pending.edge;
   pending = null;
+  document.body.classList.remove('linking');
   ghost.setAttribute('visibility','hidden');
   markPickTargets();
   if(i !== null) positionEdge(i);
