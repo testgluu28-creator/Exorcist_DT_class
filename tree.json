@@ -541,226 +541,6 @@
    "id": 53
   },
   {
-   "x": 340,
-   "y": 1366,
-   "type": "keystone",
-   "region": "combat",
-   "name": "Vessel of Sorrows",
-   "tag": "combat_keystone",
-   "desc": "Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember.",
-   "id": 54
-  },
-  {
-   "x": 690,
-   "y": 1366,
-   "type": "keystone",
-   "region": "mid",
-   "name": "Weaken the Veil",
-   "tag": "hybrid_keystone",
-   "desc": "Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die.",
-   "id": 55
-  },
-  {
-   "x": 1040,
-   "y": 1366,
-   "type": "keystone",
-   "region": "support",
-   "name": "Sanctic Bond",
-   "tag": "support_keystone",
-   "desc": "Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss.",
-   "id": 56
-  },
-  {
-   "x": 230,
-   "y": 1474,
-   "type": "keymod",
-   "region": "combat",
-   "name": "Ashen Crown",
-   "tag": "crit_chance+",
-   "desc": "Each Soulblaze tier grants +4% Critical Hit Chance.",
-   "id": 57
-  },
-  {
-   "x": 450,
-   "y": 1474,
-   "type": "keymod",
-   "region": "combat",
-   "name": "Unspent Wrath",
-   "tag": "DoT_damage+",
-   "desc": "Each Soulblaze tier grants +8% damage to burning targets.",
-   "id": 58
-  },
-  {
-   "x": 580,
-   "y": 1474,
-   "type": "keymod",
-   "region": "mid",
-   "name": "Rites of Unmaking",
-   "tag": "vulnerability_debuff",
-   "desc": "Unhallowed enemies take an additional +10% damage.",
-   "id": 59
-  },
-  {
-   "x": 800,
-   "y": 1474,
-   "type": "keymod",
-   "region": "mid",
-   "name": "Warden's Toll",
-   "tag": "soulfire_on_CC",
-   "desc": "Unhallowed enemies grant +50% Soulfire on death.",
-   "id": 60
-  },
-  {
-   "x": 930,
-   "y": 1474,
-   "type": "keymod",
-   "region": "support",
-   "name": "Willing Burden",
-   "tag": "damage_absorb",
-   "desc": "Absorb an additional 10% of allies' incoming damage.",
-   "id": 61
-  },
-  {
-   "x": 1150,
-   "y": 1474,
-   "type": "keymod",
-   "region": "support",
-   "name": "Tempered Vessel",
-   "tag": "toughness+",
-   "desc": "+20% Toughness Damage Reduction while Sanctic Bond is active.",
-   "id": 62
-  },
-  {
-   "x": 120,
-   "y": 1582,
-   "type": "keymod",
-   "region": "combat",
-   "name": "Cinder Hoard",
-   "tag": "soulfire_on_kill",
-   "desc": "Soulblaze kills generate +30% Soulfire.",
-   "id": 63
-  },
-  {
-   "x": 340,
-   "y": 1582,
-   "type": "keymod",
-   "region": "combat",
-   "name": "Wrath Sustained",
-   "tag": "DoT_stacks+",
-   "desc": "Soulblaze tiers decay one step slower.",
-   "id": 64
-  },
-  {
-   "x": 690,
-   "y": 1582,
-   "type": "keymod",
-   "region": "mid",
-   "name": "Spreading Doubt",
-   "tag": "do_CC",
-   "desc": "Killing an Unhallowed enemy staggers others within 5m.",
-   "id": 65
-  },
-  {
-   "x": 1040,
-   "y": 1582,
-   "type": "keymod",
-   "region": "support",
-   "name": "Shared Suffering",
-   "tag": "damage_absorb",
-   "desc": "Absorbed damage is split evenly across all bonded allies rather than paid by you alone.",
-   "id": 66
-  },
-  {
-   "x": 1260,
-   "y": 1582,
-   "type": "keymod",
-   "region": "support",
-   "name": "Vow Unbroken",
-   "tag": "incantation_slot_point",
-   "desc": "Counts toward unlocking your Level III Incantation slot.",
-   "id": 67
-  },
-  {
-   "x": 230,
-   "y": 1690,
-   "type": "default",
-   "region": "combat",
-   "name": "Final Pyre",
-   "tag": "DoT_damage+",
-   "desc": "Soulblaze on Elites deals +25% damage.",
-   "id": 68
-  },
-  {
-   "x": 580,
-   "y": 1690,
-   "type": "default",
-   "region": "mid",
-   "name": "Hollow Ranks",
-   "tag": "suppression+",
-   "desc": "Unhallowed enemies suppress their neighbours.",
-   "id": 69
-  },
-  {
-   "x": 800,
-   "y": 1690,
-   "type": "default",
-   "region": "mid",
-   "name": "Steady Hand",
-   "tag": "ability_cooldown+",
-   "desc": "-15% Ability cooldown while any Unhallowed enemy lives.",
-   "id": 70
-  },
-  {
-   "x": 930,
-   "y": 1690,
-   "type": "default",
-   "region": "support",
-   "name": "Anchored Faith",
-   "tag": "support",
-   "desc": "Bonded allies cannot be reduced below 1 HP by a single hit once per 60s.",
-   "id": 71
-  },
-  {
-   "x": 1150,
-   "y": 1690,
-   "type": "default",
-   "region": "support",
-   "name": "Vigil Eternal",
-   "tag": "support",
-   "desc": "Reviving an ally restores 30% Toughness to every ally in coherency.",
-   "id": 72
-  },
-  {
-   "x": 340,
-   "y": 1798,
-   "type": "default",
-   "region": "combat",
-   "name": "Immolate",
-   "tag": "DoT_damage+",
-   "desc": "Soulblaze spreads to a nearby enemy when its target dies.",
-   "id": 73
-  },
-  {
-   "x": 690,
-   "y": 1798,
-   "type": "default",
-   "region": "mid",
-   "name": "Silence the Choir",
-   "tag": "do_CC",
-   "desc": "Unhallowed Specialists are silenced: they cannot use ranged or special attacks.",
-   "id": 74
-  },
-  {
-   "x": 1040,
-   "y": 1798,
-   "type": "default",
-   "region": "support",
-   "name": "Martyr's Ledger",
-   "tag": "damage_absorb",
-   "desc": "Peril gained from Sanctic Bond is halved.",
-   "id": 75
-  },
-  {
    "x": 120,
    "y": 610,
    "type": "default",
@@ -768,7 +548,7 @@
    "name": "Ember Draught",
    "tag": "soulfire_on_kill",
    "desc": "Melee kills generate Soulfire.",
-   "id": 76
+   "id": 54
   },
   {
    "x": 1260,
@@ -778,7 +558,7 @@
    "name": "Open Ear",
    "tag": "support",
    "desc": "You see exact HP and Toughness values on allies, not just cues.",
-   "id": 77
+   "id": 55
   },
   {
    "x": 690,
@@ -788,67 +568,7 @@
    "name": "Impact Boost",
    "tag": "stagger+",
    "desc": "+10% Impact.",
-   "id": 78
-  },
-  {
-   "x": 120,
-   "y": 1366,
-   "type": "default",
-   "region": "combat",
-   "name": "Wrathful Cadence",
-   "tag": "attack_speed+",
-   "desc": "+6% Attack Speed while burning enemies are nearby.",
-   "id": 79
-  },
-  {
-   "x": 1260,
-   "y": 1366,
-   "type": "default",
-   "region": "support",
-   "name": "Patient Litany",
-   "tag": "soulfire_economy",
-   "desc": "Soulfire regenerates 25% faster while no ally is below 50% Toughness.",
-   "id": 80
-  },
-  {
-   "x": 690,
-   "y": 1474,
-   "type": "default",
-   "region": "mid",
-   "name": "Measured Force",
-   "tag": "toughness_on_CC",
-   "desc": "Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%.",
-   "id": 81
-  },
-  {
-   "x": 450,
-   "y": 1690,
-   "type": "default",
-   "region": "combat",
-   "name": "Kindler",
-   "tag": "DoT_stacks+",
-   "desc": "Heavy attacks apply 1 stack of Soulblaze.",
-   "id": 82
-  },
-  {
-   "x": 120,
-   "y": 1798,
-   "type": "default",
-   "region": "combat",
-   "name": "Last Ember",
-   "tag": "crit_chance+",
-   "desc": "+10% Critical Hit Chance while at 3/3 Soul Embers.",
-   "id": 83
-  },
-  {
-   "x": 1260,
-   "y": 1798,
-   "type": "default",
-   "region": "support",
-   "name": "Unspoken Rite",
-   "tag": "incantation_power+",
-   "desc": "AoE Incantations affect an extra 3m.",
-   "id": 84
+   "id": 56
   },
   {
    "x": 340,
@@ -858,6 +578,286 @@
    "name": "Ranged Doctrine",
    "tag": "ranged_damage+",
    "desc": "+8% Ranged Damage.",
+   "id": 57
+  },
+  {
+   "x": 120,
+   "y": 1150,
+   "type": "default",
+   "region": "combat",
+   "name": "Wrathful Cadence",
+   "tag": "attack_speed+",
+   "desc": "+6% Attack Speed while burning enemies are nearby.",
+   "id": 58
+  },
+  {
+   "x": 1040,
+   "y": 1150,
+   "type": "default",
+   "region": "support",
+   "name": "Patient Litany",
+   "tag": "soulfire_economy",
+   "desc": "Soulfire regenerates 25% faster while no ally is below 50% Toughness.",
+   "id": 59
+  },
+  {
+   "x": 230,
+   "y": 1258,
+   "type": "default",
+   "region": "combat",
+   "name": "Kindler",
+   "tag": "DoT_stacks+",
+   "desc": "Heavy attacks apply 1 stack of Soulblaze.",
+   "id": 60
+  },
+  {
+   "x": 450,
+   "y": 1258,
+   "type": "default",
+   "region": "combat",
+   "name": "Immolate",
+   "tag": "DoT_damage+",
+   "desc": "Soulblaze spreads to a nearby enemy when its target dies.",
+   "id": 61
+  },
+  {
+   "x": 800,
+   "y": 1258,
+   "type": "default",
+   "region": "mid",
+   "name": "Measured Force",
+   "tag": "toughness_on_CC",
+   "desc": "Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%.",
+   "id": 62
+  },
+  {
+   "x": 930,
+   "y": 1258,
+   "type": "default",
+   "region": "support",
+   "name": "Vigil Eternal",
+   "tag": "support",
+   "desc": "Reviving an ally restores 30% Toughness to every ally in coherency.",
+   "id": 63
+  },
+  {
+   "x": 1150,
+   "y": 1258,
+   "type": "default",
+   "region": "support",
+   "name": "Unspoken Rite",
+   "tag": "incantation_power+",
+   "desc": "AoE Incantations affect an extra 3m.",
+   "id": 64
+  },
+  {
+   "x": 285,
+   "y": 1366,
+   "type": "keystone",
+   "region": "combat",
+   "name": "Vessel of Sorrows",
+   "tag": "combat_keystone",
+   "desc": "Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember.",
+   "id": 65
+  },
+  {
+   "x": 175,
+   "y": 1474,
+   "type": "keymod",
+   "region": "combat",
+   "name": "Ashen Crown",
+   "tag": "crit_chance+",
+   "desc": "Each Soulblaze tier grants +4% Critical Hit Chance.",
+   "id": 66
+  },
+  {
+   "x": 285,
+   "y": 1474,
+   "type": "keymod",
+   "region": "combat",
+   "name": "Unspent Wrath",
+   "tag": "DoT_damage+",
+   "desc": "Each Soulblaze tier grants +8% damage to burning targets.",
+   "id": 67
+  },
+  {
+   "x": 395,
+   "y": 1474,
+   "type": "keymod",
+   "region": "combat",
+   "name": "Cinder Hoard",
+   "tag": "soulfire_on_kill",
+   "desc": "Soulblaze kills generate +30% Soulfire.",
+   "id": 68
+  },
+  {
+   "x": 230,
+   "y": 1582,
+   "type": "keymod",
+   "region": "combat",
+   "name": "Wrath Sustained",
+   "tag": "DoT_stacks+",
+   "desc": "Soulblaze tiers decay one step slower.",
+   "id": 69
+  },
+  {
+   "x": 340,
+   "y": 1582,
+   "type": "keymod",
+   "region": "combat",
+   "name": "Last Ember",
+   "tag": "crit_chance+",
+   "desc": "+10% Critical Hit Chance while at 3/3 Soul Embers.",
+   "id": 70
+  },
+  {
+   "x": 285,
+   "y": 1690,
+   "type": "keymod",
+   "region": "combat",
+   "name": "Final Pyre",
+   "tag": "DoT_damage+",
+   "desc": "Soulblaze on Elites deals +25% damage.",
+   "id": 71
+  },
+  {
+   "x": 690,
+   "y": 1366,
+   "type": "keystone",
+   "region": "mid",
+   "name": "Weaken the Veil",
+   "tag": "hybrid_keystone",
+   "desc": "Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die.",
+   "id": 72
+  },
+  {
+   "x": 580,
+   "y": 1474,
+   "type": "keymod",
+   "region": "mid",
+   "name": "Rites of Unmaking",
+   "tag": "vulnerability_debuff",
+   "desc": "Unhallowed enemies take an additional +10% damage.",
+   "id": 73
+  },
+  {
+   "x": 690,
+   "y": 1474,
+   "type": "keymod",
+   "region": "mid",
+   "name": "Warden's Toll",
+   "tag": "soulfire_on_CC",
+   "desc": "Unhallowed enemies grant +50% Soulfire on death.",
+   "id": 74
+  },
+  {
+   "x": 800,
+   "y": 1474,
+   "type": "keymod",
+   "region": "mid",
+   "name": "Spreading Doubt",
+   "tag": "do_CC",
+   "desc": "Killing an Unhallowed enemy staggers others within 5m.",
+   "id": 75
+  },
+  {
+   "x": 635,
+   "y": 1582,
+   "type": "keymod",
+   "region": "mid",
+   "name": "Hollow Ranks",
+   "tag": "suppression+",
+   "desc": "Unhallowed enemies suppress their neighbours.",
+   "id": 76
+  },
+  {
+   "x": 745,
+   "y": 1582,
+   "type": "keymod",
+   "region": "mid",
+   "name": "Steady Hand",
+   "tag": "ability_cooldown+",
+   "desc": "-15% Ability cooldown while any Unhallowed enemy lives.",
+   "id": 77
+  },
+  {
+   "x": 690,
+   "y": 1690,
+   "type": "keymod",
+   "region": "mid",
+   "name": "Silence the Choir",
+   "tag": "do_CC",
+   "desc": "Unhallowed Specialists are silenced: they cannot use ranged or special attacks.",
+   "id": 78
+  },
+  {
+   "x": 1095,
+   "y": 1366,
+   "type": "keystone",
+   "region": "support",
+   "name": "Sanctic Bond",
+   "tag": "support_keystone",
+   "desc": "Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss.",
+   "id": 79
+  },
+  {
+   "x": 985,
+   "y": 1474,
+   "type": "keymod",
+   "region": "support",
+   "name": "Willing Burden",
+   "tag": "damage_absorb",
+   "desc": "Absorb an additional 10% of allies' incoming damage.",
+   "id": 80
+  },
+  {
+   "x": 1095,
+   "y": 1474,
+   "type": "keymod",
+   "region": "support",
+   "name": "Tempered Vessel",
+   "tag": "toughness+",
+   "desc": "+20% Toughness Damage Reduction while Sanctic Bond is active.",
+   "id": 81
+  },
+  {
+   "x": 1205,
+   "y": 1474,
+   "type": "keymod",
+   "region": "support",
+   "name": "Vow Unbroken",
+   "tag": "incantation_slot_point",
+   "desc": "Counts toward unlocking your Level III Incantation slot.",
+   "id": 82
+  },
+  {
+   "x": 1040,
+   "y": 1582,
+   "type": "keymod",
+   "region": "support",
+   "name": "Shared Suffering",
+   "tag": "damage_absorb",
+   "desc": "Absorbed damage is split evenly across all bonded allies rather than paid by you alone.",
+   "id": 83
+  },
+  {
+   "x": 1150,
+   "y": 1582,
+   "type": "keymod",
+   "region": "support",
+   "name": "Anchored Faith",
+   "tag": "support",
+   "desc": "Bonded allies cannot be reduced below 1 HP by a single hit once per 60s.",
+   "id": 84
+  },
+  {
+   "x": 1095,
+   "y": 1690,
+   "type": "keymod",
+   "region": "support",
+   "name": "Martyr's Ledger",
+   "tag": "damage_absorb",
+   "desc": "Peril gained from Sanctic Bond is halved.",
    "id": 85
   }
  ],
@@ -972,7 +972,7 @@
   ],
   [
    13,
-   76
+   54
   ],
   [
    14,
@@ -1040,7 +1040,7 @@
   ],
   [
    23,
-   77
+   55
   ],
   [
    24,
@@ -1048,7 +1048,7 @@
   ],
   [
    24,
-   77
+   55
   ],
   [
    25,
@@ -1148,7 +1148,11 @@
   ],
   [
    37,
-   85
+   57
+  ],
+  [
+   37,
+   58
   ],
   [
    38,
@@ -1168,7 +1172,7 @@
   ],
   [
    38,
-   78
+   56
   ],
   [
    39,
@@ -1183,18 +1187,30 @@
    47
   ],
   [
+   39,
+   59
+  ],
+  [
    40,
    42
   ],
   [
    40,
-   85
+   57
+  ],
+  [
+   40,
+   58
   ],
   [
    41,
    47
   ],
   [
+   41,
+   59
+  ],
+  [
    42,
    48
   ],
@@ -1204,11 +1220,15 @@
   ],
   [
    42,
-   85
+   57
+  ],
+  [
+   42,
+   60
   ],
   [
    43,
-   49
+   61
   ],
   [
    44,
@@ -1220,43 +1240,55 @@
   ],
   [
    44,
-   78
+   56
   ],
   [
    45,
-   50
+   62
   ],
   [
    46,
    52
   ],
   [
-   47,
-   52
+   46,
+   59
+  ],
+  [
+   46,
+   63
   ],
   [
    47,
    53
   ],
   [
-   48,
-   54
+   47,
+   64
   ],
   [
    48,
-   79
+   60
+  ],
+  [
+   48,
+   65
   ],
   [
    49,
-   54
+   61
   ],
   [
    49,
-   79
+   65
   ],
   [
    50,
-   55
+   62
+  ],
+  [
+   50,
+   72
   ],
   [
    51,
@@ -1264,63 +1296,43 @@
   ],
   [
    51,
-   55
+   72
   ],
   [
    52,
-   56
+   64
   ],
   [
    52,
-   80
+   79
   ],
   [
    53,
-   56
-  ],
-  [
-   53,
-   80
+   79
   ],
   [
    54,
-   57
+   19
   ],
   [
    54,
-   58
-  ],
-  [
-   54,
-   59
+   25
   ],
   [
    55,
-   58
-  ],
-  [
-   55,
-   59
-  ],
-  [
-   55,
-   60
-  ],
-  [
-   55,
-   61
-  ],
-  [
-   55,
-   81
+   30
   ],
   [
    56,
-   60
+   45
   ],
   [
    56,
-   61
+   50
+  ],
+  [
+   56,
+   51
   ],
   [
    56,
@@ -1328,171 +1340,179 @@
   ],
   [
    57,
-   63
+   43
   ],
   [
    57,
-   64
+   49
+  ],
+  [
+   57,
+   60
+  ],
+  [
+   57,
+   61
   ],
   [
    58,
+   42
+  ],
+  [
+   58,
+   48
+  ],
+  [
+   59,
+   47
+  ],
+  [
+   59,
+   52
+  ],
+  [
+   59,
+   53
+  ],
+  [
+   59,
+   63
+  ],
+  [
+   59,
    64
   ],
   [
-   59,
-   65
-  ],
-  [
-   59,
-   81
+   60,
+   49
   ],
   [
    60,
    65
   ],
   [
-   61,
-   66
-  ],
-  [
    62,
-   66
-  ],
-  [
-   62,
-   67
+   72
   ],
   [
    63,
+   52
+  ],
+  [
+   64,
+   53
+  ],
+  [
+   64,
+   79
+  ],
+  [
+   65,
+   66
+  ],
+  [
+   65,
+   67
+  ],
+  [
+   65,
    68
   ],
   [
-   64,
-   68
-  ],
-  [
-   64,
+   66,
    69
-  ],
-  [
-   64,
-   82
-  ],
-  [
-   65,
-   69
-  ],
-  [
-   65,
-   70
-  ],
-  [
-   65,
-   71
-  ],
-  [
-   65,
-   82
-  ],
-  [
-   66,
-   70
-  ],
-  [
-   66,
-   71
-  ],
-  [
-   66,
-   72
   ],
   [
    67,
-   72
+   69
+  ],
+  [
+   67,
+   70
   ],
   [
    68,
-   73
-  ],
-  [
-   68,
-   83
+   70
   ],
   [
    69,
-   74
+   71
   ],
   [
    70,
-   74
-  ],
-  [
-   71,
-   75
+   71
   ],
   [
    72,
-   75
-  ],
-  [
-   72,
-   84
-  ],
-  [
-   76,
-   19
-  ],
-  [
-   76,
-   25
-  ],
-  [
-   77,
-   30
-  ],
-  [
-   78,
-   45
-  ],
-  [
-   78,
-   50
-  ],
-  [
-   78,
-   51
-  ],
-  [
-   79,
-   57
-  ],
-  [
-   80,
-   62
-  ],
-  [
-   81,
-   60
-  ],
-  [
-   81,
-   65
-  ],
-  [
-   82,
    73
   ],
   [
-   85,
-   43
+   72,
+   74
   ],
   [
-   85,
-   48
+   72,
+   75
   ],
   [
-   85,
-   49
+   73,
+   76
+  ],
+  [
+   74,
+   76
+  ],
+  [
+   74,
+   77
+  ],
+  [
+   75,
+   77
+  ],
+  [
+   76,
+   78
+  ],
+  [
+   77,
+   78
+  ],
+  [
+   79,
+   80
+  ],
+  [
+   79,
+   81
+  ],
+  [
+   79,
+   82
+  ],
+  [
+   80,
+   83
+  ],
+  [
+   81,
+   83
+  ],
+  [
+   81,
+   84
+  ],
+  [
+   82,
+   84
+  ],
+  [
+   83,
+   85
+  ],
+  [
+   84,
+   85
   ]
  ]
 }
