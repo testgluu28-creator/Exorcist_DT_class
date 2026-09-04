@@ -1,864 +1,1036 @@
 {
  "nodes": [
   {
+   "id": 0,
    "x": 690,
    "y": 70,
    "type": "root",
    "region": "support",
    "name": "Exorcist",
-   "tag": "start",
-   "desc": "Ecclesiarchy exorcist seconded to Grendyl's retinue. 200 HP / 85 Toughness / 5% crit.",
-   "id": 0
+   "tags": [
+    "start"
+   ],
+   "desc": "Ecclesiarchy exorcist seconded to Grendyl's retinue. 200 HP / 85 Toughness / 5% crit."
   },
   {
+   "id": 1,
    "x": 340,
    "y": 178,
    "type": "default",
    "region": "combat",
    "name": "Rite of Wrath",
-   "tag": "melee_damage+",
-   "desc": "+5% Melee Damage.",
-   "id": 1
+   "tags": [
+    "melee_damage+"
+   ],
+   "desc": "+5% Melee Damage."
   },
   {
+   "id": 2,
    "x": 690,
    "y": 178,
    "type": "default",
    "region": "support",
    "name": "Attentive Ministry",
-   "tag": "support",
-   "desc": "Allies in coherency gain +5% Toughness from all replenishment sources.",
-   "id": 2
+   "tags": [
+    "support"
+   ],
+   "desc": "Allies in coherency gain +5% Toughness from all replenishment sources."
   },
   {
+   "id": 3,
    "x": 1040,
    "y": 178,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Braced Litany",
-   "tag": "toughness+",
-   "desc": "+15 Toughness.",
-   "id": 3
+   "tags": [
+    "toughness+"
+   ],
+   "desc": "+15 Toughness."
   },
   {
+   "id": 4,
    "x": 230,
    "y": 286,
    "type": "default",
    "region": "combat",
    "name": "Kindled Ire",
-   "tag": "DoT_damage+",
-   "desc": "Soulblaze you apply deals +15% damage.",
-   "id": 4
+   "tags": [
+    "DoT_damage+"
+   ],
+   "desc": "Soulblaze you apply deals +15% damage."
   },
   {
+   "id": 5,
    "x": 450,
    "y": 286,
    "type": "default",
    "region": "combat",
    "name": "Keen Sight",
-   "tag": "crit_chance+",
-   "desc": "+3% Critical Hit Chance.",
-   "id": 5
+   "tags": [
+    "crit_chance+"
+   ],
+   "desc": "+3% Critical Hit Chance."
   },
   {
+   "id": 6,
    "x": 580,
    "y": 286,
    "type": "default",
    "region": "support",
    "name": "Warding Hand",
-   "tag": "support",
-   "desc": "+20% revive and assist speed (stacks with base).",
-   "id": 6
+   "tags": [
+    "support"
+   ],
+   "desc": "+20% revive and assist speed (stacks with base)."
   },
   {
+   "id": 7,
    "x": 800,
    "y": 286,
    "type": "default",
    "region": "support",
    "name": "Soul Thrift",
-   "tag": "soulfire_economy",
-   "desc": "-10% Soulfire cost on all Incantations.",
-   "id": 7
+   "tags": [
+    "soulfire_economy"
+   ],
+   "desc": "-10% Soulfire cost on all Incantations."
   },
   {
+   "id": 8,
    "x": 1040,
    "y": 286,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Staggering Word",
-   "tag": "stagger+",
-   "desc": "+15% Impact with all weapons.",
-   "id": 8
+   "tags": [
+    "stagger+"
+   ],
+   "desc": "+15% Impact with all weapons."
   },
   {
+   "id": 9,
    "x": 1260,
    "y": 286,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Wary Step",
-   "tag": "mobility+",
-   "desc": "+5% Movement Speed.",
-   "id": 9
+   "tags": [
+    "mobility+"
+   ],
+   "desc": "+5% Movement Speed."
   },
   {
+   "id": 10,
    "x": 340,
    "y": 394,
    "type": "blitz",
    "region": "combat",
    "name": "Dominate",
-   "tag": "do_CC",
-   "desc": "Pulls nearby mobs into an AoE and freezes them for 5s, forming an obstacle. Nearby mobs are slowed. Direct damage frees a target. Costs 1 SE.",
-   "id": 10
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Pulls nearby mobs into an AoE and freezes them for 5s, forming an obstacle. Nearby mobs are slowed. Direct damage frees a target. Costs 1 SE."
   },
   {
+   "id": 11,
    "x": 690,
    "y": 394,
    "type": "blitz",
    "region": "support",
    "name": "Sanctic Dome",
-   "tag": "support",
-   "desc": "Telekine Dome that halts daemonic entry. On dissipation, restores 50-100% of HP allies lost inside it. Costs 2-3 SE.",
-   "id": 11
+   "tags": [
+    "support"
+   ],
+   "desc": "Telekine Dome that halts daemonic entry. On dissipation, restores 50-100% of HP allies lost inside it. Costs 2-3 SE."
   },
   {
+   "id": 12,
    "x": 1040,
    "y": 394,
    "type": "blitz",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Telekine Palm",
-   "tag": "utility",
-   "desc": "Manipulate objects at range, clear hazard patches, or extract a downed ally to your position. Costs 1-2 SE.",
-   "id": 12
+   "tags": [
+    "utility"
+   ],
+   "desc": "Manipulate objects at range, clear hazard patches, or extract a downed ally to your position. Costs 1-2 SE."
   },
   {
+   "id": 13,
    "x": 230,
    "y": 502,
    "type": "blitzmod",
    "region": "combat",
    "name": "Grip of Iron",
-   "tag": "CC_duration+",
-   "desc": "Dominate holds targets for +2s.",
-   "id": 13
+   "tags": [
+    "CC_duration+"
+   ],
+   "desc": "Dominate holds targets for +2s."
   },
   {
+   "id": 14,
    "x": 450,
    "y": 502,
    "type": "blitzmod",
    "region": "combat",
    "name": "Immolating Grasp",
-   "tag": "DoT_stacks+",
-   "desc": "Enemies held by Dominate gain 4 stacks of Soulblaze.",
-   "id": 14
+   "tags": [
+    "DoT_stacks+"
+   ],
+   "desc": "Enemies held by Dominate gain 4 stacks of Soulblaze."
   },
   {
+   "id": 15,
    "x": 580,
    "y": 502,
    "type": "blitzmod",
    "region": "support",
    "name": "Consecrated Ground",
-   "tag": "support",
-   "desc": "Sanctic Dome also cleanses 25% of a wound of Corruption on dissipation.",
-   "id": 15
+   "tags": [
+    "support"
+   ],
+   "desc": "Sanctic Dome also cleanses 25% of a wound of Corruption on dissipation."
   },
   {
+   "id": 16,
    "x": 800,
    "y": 502,
    "type": "blitzmod",
    "region": "support",
    "name": "Ember Thrift",
-   "tag": "soulfire_economy",
-   "desc": "Sanctic Dome costs 1 fewer Soul Ember.",
-   "id": 16
+   "tags": [
+    "soulfire_economy"
+   ],
+   "desc": "Sanctic Dome costs 1 fewer Soul Ember."
   },
   {
+   "id": 17,
    "x": 930,
    "y": 502,
    "type": "blitzmod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Far Reach",
-   "tag": "utility",
-   "desc": "Telekine Palm range +50%. Hazard clearing radius +40%.",
-   "id": 17
+   "tags": [
+    "utility"
+   ],
+   "desc": "Telekine Palm range +50%. Hazard clearing radius +40%."
   },
   {
+   "id": 18,
    "x": 1150,
    "y": 502,
    "type": "blitzmod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Sundering Pull",
-   "tag": "do_CC",
-   "desc": "Extracting an ally staggers enemies along the path.",
-   "id": 18
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Extracting an ally staggers enemies along the path."
   },
   {
+   "id": 19,
    "x": 230,
    "y": 610,
    "type": "default",
    "region": "combat",
    "name": "Anathema",
-   "tag": "damage_vs_daemon+",
-   "desc": "+20% damage to Daemonhosts and Infested.",
-   "id": 19
+   "tags": [
+    "damage_vs_daemon+"
+   ],
+   "desc": "+20% damage to Daemonhosts and Infested."
   },
   {
+   "id": 20,
    "x": 450,
    "y": 610,
    "type": "default",
    "region": "combat",
    "name": "Searing Focus",
-   "tag": "DoT_stacks+",
-   "desc": "Critical hits apply 2 stacks of Soulblaze.",
-   "id": 20
+   "tags": [
+    "DoT_stacks+"
+   ],
+   "desc": "Critical hits apply 2 stacks of Soulblaze."
   },
   {
+   "id": 21,
    "x": 690,
    "y": 610,
    "type": "stat",
    "region": "support",
    "name": "Toughness Boost",
-   "tag": "toughness+",
-   "desc": "+20 Toughness.",
-   "id": 21
+   "tags": [
+    "toughness+"
+   ],
+   "desc": "+20 Toughness."
   },
   {
+   "id": 22,
    "x": 580,
    "y": 610,
    "type": "default",
    "region": "support",
    "name": "Litany Unbroken",
-   "tag": "incantation_power+",
-   "desc": "Single-target Incantations restore an extra 8% Toughness.",
-   "id": 22
+   "tags": [
+    "incantation_power+"
+   ],
+   "desc": "Single-target Incantations restore an extra 8% Toughness."
   },
   {
+   "id": 23,
    "x": 1040,
    "y": 610,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Cowing Presence",
-   "tag": "suppression+",
-   "desc": "Staggering an enemy suppresses others within 4m.",
-   "id": 23
+   "tags": [
+    "suppression+"
+   ],
+   "desc": "Staggering an enemy suppresses others within 4m."
   },
   {
+   "id": 24,
    "x": 1260,
    "y": 610,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "White Noise",
-   "tag": "suppression+",
-   "desc": "Suppression you inflict lasts 1.5s longer, and suppressed shooters move 15% slower.",
-   "id": 24
+   "tags": [
+    "suppression+"
+   ],
+   "desc": "Suppression you inflict lasts 1.5s longer, and suppressed shooters move 15% slower."
   },
   {
+   "id": 25,
    "x": 340,
    "y": 718,
    "type": "aura",
    "region": "combat",
    "name": "Psyniscience",
-   "tag": "utility",
-   "desc": "Specialists and Disablers within 25m are outlined for all allies in coherency, through walls.",
-   "id": 25
+   "tags": [
+    "utility"
+   ],
+   "desc": "Specialists and Disablers within 25m are outlined for all allies in coherency, through walls."
   },
   {
+   "id": 26,
    "x": 690,
    "y": 718,
    "type": "aura",
    "region": "support",
    "name": "Unyielding Vigil",
-   "tag": "support",
-   "desc": "Allies in coherency gain +15% Toughness from all replenishment; downed allies lose downed-health 25% slower.",
-   "id": 26
+   "tags": [
+    "support"
+   ],
+   "desc": "Allies in coherency gain +15% Toughness from all replenishment; downed allies lose downed-health 25% slower."
   },
   {
+   "id": 27,
    "x": 1040,
    "y": 718,
    "type": "aura",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Litany of Abjuration",
-   "tag": "support",
-   "desc": "Allies in coherency: +25% Corruption resistance; DoTs on them expire 30% faster.",
-   "id": 27
+   "tags": [
+    "support"
+   ],
+   "desc": "Allies in coherency: +25% Corruption resistance; DoTs on them expire 30% faster."
   },
   {
+   "id": 28,
    "x": 340,
    "y": 826,
    "type": "ability",
    "region": "combat",
    "name": "Dome of Banishment",
-   "tag": "DoT_damage+",
-   "desc": "Pulls non-boss enemies into an AoE and applies 10 Soulblaze, +5 per ally also inside.",
-   "id": 28
+   "tags": [
+    "DoT_damage+"
+   ],
+   "desc": "Pulls non-boss enemies into an AoE and applies 10 Soulblaze, +5 per ally also inside."
   },
   {
+   "id": 29,
    "x": 690,
    "y": 826,
    "type": "ability",
    "region": "support",
    "name": "Distort Vision",
-   "tag": "utility",
-   "desc": "Invisible for 7s and spawn an improved decoy that absorbs aggro. Support Incantations do not break stealth until they resolve.",
-   "id": 29
+   "tags": [
+    "utility"
+   ],
+   "desc": "Invisible for 7s and spawn an improved decoy that absorbs aggro. Support Incantations do not break stealth until they resolve."
   },
   {
+   "id": 30,
    "x": 1040,
    "y": 826,
    "type": "ability",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Telekine Fling",
-   "tag": "do_CC",
-   "desc": "Grip, lift and hurl a human-sized enemy. Charge time and swing width set distance and AoE. Impact kills the thrown target and staggers everything it hits.",
-   "id": 30
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Grip, lift and hurl a human-sized enemy. Charge time and swing width set distance and AoE. Impact kills the thrown target and staggers everything it hits."
   },
   {
+   "id": 31,
    "x": 230,
    "y": 934,
    "type": "abilmod",
    "region": "combat",
    "name": "Widening Gyre",
-   "tag": "DoT_stacks+",
-   "desc": "Dome of Banishment applies +4 Soulblaze per ally inside.",
-   "id": 31
+   "tags": [
+    "DoT_stacks+"
+   ],
+   "desc": "Dome of Banishment applies +4 Soulblaze per ally inside."
   },
   {
+   "id": 32,
    "x": 450,
    "y": 934,
    "type": "abilmod",
    "region": "combat",
    "name": "Hungering Dome",
-   "tag": "soulfire_on_kill",
-   "desc": "Enemies dying inside Dome of Banishment each grant Soulfire.",
-   "id": 32
+   "tags": [
+    "soulfire_on_kill"
+   ],
+   "desc": "Enemies dying inside Dome of Banishment each grant Soulfire."
   },
   {
+   "id": 33,
    "x": 580,
    "y": 934,
    "type": "abilmod",
    "region": "support",
    "name": "Lingering Shade",
-   "tag": "support",
-   "desc": "Distort Vision decoy lasts +4s and taunts nearby enemies.",
-   "id": 33
+   "tags": [
+    "support"
+   ],
+   "desc": "Distort Vision decoy lasts +4s and taunts nearby enemies."
   },
   {
+   "id": 34,
    "x": 800,
    "y": 934,
    "type": "abilmod",
    "region": "support",
    "name": "Veiled Ministry",
-   "tag": "incantation_power+",
-   "desc": "Incantations cast from stealth cost 40% less Soulfire.",
-   "id": 34
+   "tags": [
+    "incantation_power+"
+   ],
+   "desc": "Incantations cast from stealth cost 40% less Soulfire."
   },
   {
+   "id": 35,
    "x": 930,
    "y": 934,
    "type": "abilmod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Wider Arc",
-   "tag": "do_CC",
-   "desc": "Telekine Fling ballistic throws gain +50% impact radius.",
-   "id": 35
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Telekine Fling ballistic throws gain +50% impact radius."
   },
   {
+   "id": 36,
    "x": 1150,
    "y": 934,
    "type": "abilmod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Unburdened Grip",
-   "tag": "ability_cooldown+",
-   "desc": "Killing the thrown target refunds 20% Ability cooldown.",
-   "id": 36
+   "tags": [
+    "ability_cooldown+"
+   ],
+   "desc": "Killing the thrown target refunds 20% Ability cooldown."
   },
   {
+   "id": 37,
    "x": 340,
    "y": 1042,
    "type": "abilmod",
    "region": "combat",
    "name": "Banishment Echo",
-   "tag": "ability_cooldown+",
-   "desc": "Dome of Banishment cooldown -20%.",
-   "id": 37
+   "tags": [
+    "ability_cooldown+"
+   ],
+   "desc": "Dome of Banishment cooldown -20%."
   },
   {
+   "id": 38,
    "x": 690,
    "y": 1042,
    "type": "abilmod",
    "region": "support",
    "name": "Parting Pulse",
-   "tag": "do_CC",
-   "desc": "Decoy's expiry pulse staggers in a 8m radius and restores 15% Toughness to allies in it.",
-   "id": 38
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Decoy's expiry pulse staggers in a 8m radius and restores 15% Toughness to allies in it."
   },
   {
+   "id": 39,
    "x": 1040,
    "y": 1042,
    "type": "abilmod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Second Grip",
-   "tag": "ability_charges+",
-   "desc": "+1 charge of Telekine Fling.",
-   "id": 39
+   "tags": [
+    "ability_charges+"
+   ],
+   "desc": "+1 charge of Telekine Fling."
   },
   {
+   "id": 40,
    "x": 120,
    "y": 1042,
    "type": "stat",
    "region": "combat",
    "name": "Melee Damage Boost",
-   "tag": "melee_damage+",
-   "desc": "+10% Melee Damage.",
-   "id": 40
+   "tags": [
+    "melee_damage+"
+   ],
+   "desc": "+10% Melee Damage."
   },
   {
+   "id": 41,
    "x": 1260,
    "y": 1042,
    "type": "stat",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Impact Boost",
-   "tag": "stagger+",
-   "desc": "+10% Impact.",
-   "id": 41
+   "tags": [
+    "stagger+"
+   ],
+   "desc": "+10% Impact."
   },
   {
+   "id": 42,
    "x": 230,
    "y": 1150,
    "type": "default",
    "region": "combat",
    "name": "Zealot's Cadence",
-   "tag": "attack_speed+",
-   "desc": "+8% Attack Speed after a Soulblaze kill.",
-   "id": 42
+   "tags": [
+    "attack_speed+"
+   ],
+   "desc": "+8% Attack Speed after a Soulblaze kill."
   },
   {
+   "id": 43,
    "x": 450,
    "y": 1150,
    "type": "default",
    "region": "combat",
    "name": "Rent Faith",
-   "tag": "rending+",
-   "desc": "+10% Rending against burning enemies.",
-   "id": 43
+   "tags": [
+    "rending+"
+   ],
+   "desc": "+10% Rending against burning enemies."
   },
   {
+   "id": 44,
    "x": 580,
    "y": 1150,
    "type": "default",
    "region": "support",
    "name": "Deeper Communion",
-   "tag": "incantation_slot_point",
-   "desc": "Counts toward unlocking your Level II Incantation slot.",
-   "id": 44
+   "tags": [
+    "incantation_slot_point"
+   ],
+   "desc": "Counts toward unlocking your Level II Incantation slot."
   },
   {
+   "id": 45,
    "x": 800,
    "y": 1150,
    "type": "default",
    "region": "support",
    "name": "Unstinting Hand",
-   "tag": "support",
-   "desc": "Incantations cast on an ally below 50% HP also grant them +20% damage resistance for 5s.",
-   "id": 45
+   "tags": [
+    "support"
+   ],
+   "desc": "Incantations cast on an ally below 50% HP also grant them +20% damage resistance for 5s."
   },
   {
+   "id": 46,
    "x": 930,
    "y": 1150,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Breaking Word",
-   "tag": "vulnerability_debuff",
-   "desc": "Staggered enemies take +8% damage from all sources.",
-   "id": 46
+   "tags": [
+    "vulnerability_debuff"
+   ],
+   "desc": "Staggered enemies take +8% damage from all sources."
   },
   {
+   "id": 47,
    "x": 1150,
    "y": 1150,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Toll of Control",
-   "tag": "toughness_on_CC",
-   "desc": "Staggering an Elite restores 8% Toughness.",
-   "id": 47
+   "tags": [
+    "toughness_on_CC"
+   ],
+   "desc": "Staggering an Elite restores 8% Toughness."
   },
   {
+   "id": 48,
    "x": 120,
    "y": 1258,
    "type": "default",
    "region": "combat",
    "name": "Pyre Unbound",
-   "tag": "DoT_damage+",
-   "desc": "Soulblaze stacks past the normal cap, to 12.",
-   "id": 48
+   "tags": [
+    "DoT_damage+"
+   ],
+   "desc": "Soulblaze stacks past the normal cap, to 12."
   },
   {
+   "id": 49,
    "x": 340,
    "y": 1258,
    "type": "default",
    "region": "combat",
    "name": "Weakspot Doctrine",
-   "tag": "weakspot_damage+",
-   "desc": "+15% Weakspot Damage.",
-   "id": 49
+   "tags": [
+    "weakspot_damage+"
+   ],
+   "desc": "+15% Weakspot Damage."
   },
   {
+   "id": 50,
    "x": 690,
    "y": 1258,
    "type": "default",
    "region": "support",
    "name": "Wider Communion",
-   "tag": "aura_radius+",
-   "desc": "+35% coherency radius. You also see exact HP and Toughness values on allies, not just cues.",
-   "id": 50
+   "tags": [
+    "aura_radius+"
+   ],
+   "desc": "+35% coherency radius. You also see exact HP and Toughness values on allies, not just cues."
   },
   {
+   "id": 51,
    "x": 580,
    "y": 1258,
    "type": "default",
    "region": "support",
    "name": "Vigil Eternal",
-   "tag": "support",
-   "desc": "Reviving an ally restores 30% Toughness to every ally in coherency. Allies in coherency also take -5% damage while you are above 50% Peril.",
-   "id": 51
+   "tags": [
+    "support"
+   ],
+   "desc": "Reviving an ally restores 30% Toughness to every ally in coherency. Allies in coherency also take -5% damage while you are above 50% Peril."
   },
   {
+   "id": 52,
    "x": 1040,
    "y": 1258,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Seal the Breach",
-   "tag": "peril_safety",
-   "desc": "Consumes 2 Soul Embers to negate a Peril Overload, venting 50% Peril and staggering within 5m. 20s lockout. Will not fire while holding Quell.",
-   "id": 52
+   "tags": [
+    "peril_safety"
+   ],
+   "desc": "Consumes 2 Soul Embers to negate a Peril Overload, venting 50% Peril and staggering within 5m. 20s lockout. Will not fire while holding Quell."
   },
   {
+   "id": 53,
    "x": 1260,
    "y": 1258,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Confound",
-   "tag": "do_CC",
-   "desc": "Elites and Monstrosities you stagger stay staggered 50% longer and cannot call for reinforcements while staggered.",
-   "id": 53
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Elites and Monstrosities you stagger stay staggered 50% longer and cannot call for reinforcements while staggered."
   },
   {
+   "id": 54,
    "x": 120,
    "y": 610,
    "type": "default",
    "region": "combat",
    "name": "Ember Draught",
-   "tag": "soulfire_on_kill",
-   "desc": "Melee kills generate Soulfire.",
-   "id": 54
+   "tags": [
+    "soulfire_on_kill"
+   ],
+   "desc": "Melee kills generate Soulfire."
   },
   {
+   "id": 55,
    "x": 1260,
    "y": 718,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Weapon Jinx",
-   "tag": "do_CC",
-   "desc": "Enemies you stagger attack 20% slower for 3s.",
-   "id": 55
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Enemies you stagger attack 20% slower for 3s."
   },
   {
+   "id": 56,
    "x": 690,
    "y": 1150,
    "type": "default",
    "region": "support",
    "name": "Patient Litany",
-   "tag": "soulfire_economy",
-   "desc": "Soulfire regenerates 25% faster while no ally is below 50% Toughness.",
-   "id": 56
+   "tags": [
+    "soulfire_economy"
+   ],
+   "desc": "Soulfire regenerates 25% faster while no ally is below 50% Toughness."
   },
   {
+   "id": 57,
    "x": 340,
    "y": 1150,
    "type": "default",
    "region": "combat",
    "name": "Ranged Doctrine",
-   "tag": "ranged_damage+",
-   "desc": "+8% Ranged Damage.",
-   "id": 57
+   "tags": [
+    "ranged_damage+"
+   ],
+   "desc": "+8% Ranged Damage."
   },
   {
+   "id": 58,
    "x": 120,
    "y": 1150,
    "type": "default",
    "region": "combat",
    "name": "Wrathful Cadence",
-   "tag": "attack_speed+",
-   "desc": "+6% Attack Speed while burning enemies are nearby.",
-   "id": 58
+   "tags": [
+    "attack_speed+"
+   ],
+   "desc": "+6% Attack Speed while burning enemies are nearby."
   },
   {
+   "id": 59,
    "x": 1040,
    "y": 1150,
    "type": "stat",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Toughness Boost",
-   "tag": "toughness+",
-   "desc": "+20 Toughness.",
-   "id": 59
+   "tags": [
+    "toughness+"
+   ],
+   "desc": "+20 Toughness."
   },
   {
+   "id": 60,
    "x": 230,
    "y": 1258,
    "type": "default",
    "region": "combat",
    "name": "Kindler",
-   "tag": "DoT_stacks+",
-   "desc": "Heavy attacks apply 1 stack of Soulblaze.",
-   "id": 60
+   "tags": [
+    "DoT_stacks+"
+   ],
+   "desc": "Heavy attacks apply 1 stack of Soulblaze."
   },
   {
+   "id": 61,
    "x": 450,
    "y": 1258,
    "type": "default",
    "region": "combat",
    "name": "Immolate",
-   "tag": "DoT_damage+",
-   "desc": "Soulblaze spreads to a nearby enemy when its target dies.",
-   "id": 61
+   "tags": [
+    "DoT_damage+"
+   ],
+   "desc": "Soulblaze spreads to a nearby enemy when its target dies."
   },
   {
+   "id": 62,
    "x": 800,
    "y": 1258,
    "type": "default",
    "region": "support",
    "name": "Unspoken Rite",
-   "tag": "incantation_power+",
-   "desc": "AoE Incantations affect an extra 3m, and Corruption-removing Incantations remove an extra 10% of a wound.",
-   "id": 62
+   "tags": [
+    "incantation_power+"
+   ],
+   "desc": "AoE Incantations affect an extra 3m, and Corruption-removing Incantations remove an extra 10% of a wound."
   },
   {
+   "id": 63,
    "x": 930,
    "y": 1258,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Grim Composure",
-   "tag": "toughness+",
-   "desc": "+10% Toughness Damage Reduction while above 75% Peril.",
-   "id": 63
+   "tags": [
+    "toughness+"
+   ],
+   "desc": "+10% Toughness Damage Reduction while above 75% Peril."
   },
   {
+   "id": 64,
    "x": 1150,
    "y": 1258,
    "type": "default",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Measured Force",
-   "tag": "toughness_on_CC",
-   "desc": "Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%.",
-   "id": 64
+   "tags": [
+    "toughness_on_CC"
+   ],
+   "desc": "Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%."
   },
   {
+   "id": 65,
    "x": 285,
    "y": 1366,
    "type": "keystone",
    "region": "combat",
    "name": "Vessel of Sorrows",
-   "tag": "combat_keystone",
-   "desc": "Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember.",
-   "id": 65
+   "tags": [
+    "combat_keystone"
+   ],
+   "desc": "Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember."
   },
   {
+   "id": 66,
    "x": 175,
    "y": 1474,
    "type": "keymod",
    "region": "combat",
    "name": "Ashen Crown",
-   "tag": "crit_chance+",
-   "desc": "Each Soulblaze tier grants +4% Critical Hit Chance.",
-   "id": 66
+   "tags": [
+    "crit_chance+"
+   ],
+   "desc": "Each Soulblaze tier grants +4% Critical Hit Chance."
   },
   {
+   "id": 67,
    "x": 285,
    "y": 1474,
    "type": "keymod",
    "region": "combat",
    "name": "Unspent Wrath",
-   "tag": "DoT_damage+",
-   "desc": "Each Soulblaze tier grants +8% damage to burning targets.",
-   "id": 67
+   "tags": [
+    "DoT_damage+"
+   ],
+   "desc": "Each Soulblaze tier grants +8% damage to burning targets."
   },
   {
+   "id": 68,
    "x": 395,
    "y": 1474,
    "type": "keymod",
    "region": "combat",
    "name": "Cinder Hoard",
-   "tag": "soulfire_on_kill",
-   "desc": "Soulblaze kills generate +30% Soulfire.",
-   "id": 68
+   "tags": [
+    "soulfire_on_kill"
+   ],
+   "desc": "Soulblaze kills generate +30% Soulfire."
   },
   {
+   "id": 69,
    "x": 230,
    "y": 1582,
    "type": "keymod",
    "region": "combat",
    "name": "Wrath Sustained",
-   "tag": "DoT_stacks+",
-   "desc": "Soulblaze tiers decay one step slower.",
-   "id": 69
+   "tags": [
+    "DoT_stacks+"
+   ],
+   "desc": "Soulblaze tiers decay one step slower."
   },
   {
+   "id": 70,
    "x": 340,
    "y": 1582,
    "type": "keymod",
    "region": "combat",
    "name": "Last Ember",
-   "tag": "crit_chance+",
-   "desc": "+10% Critical Hit Chance while at 3/3 Soul Embers.",
-   "id": 70
+   "tags": [
+    "crit_chance+"
+   ],
+   "desc": "+10% Critical Hit Chance while at 3/3 Soul Embers."
   },
   {
+   "id": 71,
    "x": 285,
    "y": 1690,
    "type": "keymod",
    "region": "combat",
    "name": "Final Pyre",
-   "tag": "DoT_damage+",
-   "desc": "Soulblaze on Elites deals +25% damage.",
-   "id": 71
+   "tags": [
+    "DoT_damage+"
+   ],
+   "desc": "Soulblaze on Elites deals +25% damage."
   },
   {
+   "id": 72,
    "x": 690,
    "y": 1366,
    "type": "keystone",
    "region": "support",
    "name": "Sanctic Bond",
-   "tag": "support_keystone",
-   "desc": "Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss.",
-   "id": 72
+   "tags": [
+    "support_keystone"
+   ],
+   "desc": "Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss."
   },
   {
+   "id": 73,
    "x": 580,
    "y": 1474,
    "type": "keymod",
    "region": "support",
    "name": "Willing Burden",
-   "tag": "damage_absorb",
-   "desc": "Absorb an additional 10% of allies' incoming damage.",
-   "id": 73
+   "tags": [
+    "damage_absorb"
+   ],
+   "desc": "Absorb an additional 10% of allies' incoming damage."
   },
   {
+   "id": 74,
    "x": 690,
    "y": 1474,
    "type": "keymod",
    "region": "support",
    "name": "Tempered Vessel",
-   "tag": "toughness+",
-   "desc": "+20% Toughness Damage Reduction while Sanctic Bond is active.",
-   "id": 74
+   "tags": [
+    "toughness+"
+   ],
+   "desc": "+20% Toughness Damage Reduction while Sanctic Bond is active."
   },
   {
+   "id": 75,
    "x": 800,
    "y": 1474,
    "type": "keymod",
    "region": "support",
    "name": "Vow Unbroken",
-   "tag": "incantation_slot_point",
-   "desc": "Counts toward unlocking your Level III Incantation slot.",
-   "id": 75
+   "tags": [
+    "incantation_slot_point"
+   ],
+   "desc": "Counts toward unlocking your Level III Incantation slot."
   },
   {
+   "id": 76,
    "x": 635,
    "y": 1582,
    "type": "keymod",
    "region": "support",
    "name": "Shared Suffering",
-   "tag": "damage_absorb",
-   "desc": "Absorbed damage is split evenly across all bonded allies rather than paid by you alone.",
-   "id": 76
+   "tags": [
+    "damage_absorb"
+   ],
+   "desc": "Absorbed damage is split evenly across all bonded allies rather than paid by you alone."
   },
   {
+   "id": 77,
    "x": 745,
    "y": 1582,
    "type": "keymod",
    "region": "support",
    "name": "Anchored Faith",
-   "tag": "support",
-   "desc": "Bonded allies cannot be reduced below 1 HP by a single hit once per 60s.",
-   "id": 77
+   "tags": [
+    "support"
+   ],
+   "desc": "Bonded allies cannot be reduced below 1 HP by a single hit once per 60s."
   },
   {
+   "id": 78,
    "x": 690,
    "y": 1690,
    "type": "keymod",
    "region": "support",
    "name": "Martyr's Ledger",
-   "tag": "damage_absorb",
-   "desc": "Peril gained from Sanctic Bond is halved.",
-   "id": 78
+   "tags": [
+    "damage_absorb"
+   ],
+   "desc": "Peril gained from Sanctic Bond is halved."
   },
   {
+   "id": 79,
    "x": 1095,
    "y": 1366,
    "type": "keystone",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Weaken the Veil",
-   "tag": "hybrid_keystone",
-   "desc": "Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die.",
-   "id": 79
+   "tags": [
+    "hybrid_keystone"
+   ],
+   "desc": "Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die."
   },
   {
+   "id": 80,
    "x": 985,
    "y": 1474,
    "type": "keymod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Rites of Unmaking",
-   "tag": "vulnerability_debuff",
-   "desc": "Unhallowed enemies take an additional +10% damage.",
-   "id": 80
+   "tags": [
+    "vulnerability_debuff"
+   ],
+   "desc": "Unhallowed enemies take an additional +10% damage."
   },
   {
+   "id": 81,
    "x": 1095,
    "y": 1474,
    "type": "keymod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Warden's Toll",
-   "tag": "soulfire_on_CC",
-   "desc": "Unhallowed enemies grant +50% Soulfire on death.",
-   "id": 81
+   "tags": [
+    "soulfire_on_CC"
+   ],
+   "desc": "Unhallowed enemies grant +50% Soulfire on death."
   },
   {
+   "id": 82,
    "x": 1205,
    "y": 1474,
    "type": "keymod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Spreading Doubt",
-   "tag": "do_CC",
-   "desc": "Killing an Unhallowed enemy staggers others within 5m.",
-   "id": 82
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Killing an Unhallowed enemy staggers others within 5m."
   },
   {
+   "id": 83,
    "x": 1040,
    "y": 1582,
    "type": "keymod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Hollow Ranks",
-   "tag": "suppression+",
-   "desc": "Unhallowed enemies suppress their neighbours.",
-   "id": 83
+   "tags": [
+    "suppression+"
+   ],
+   "desc": "Unhallowed enemies suppress their neighbours."
   },
   {
+   "id": 84,
    "x": 1150,
    "y": 1582,
    "type": "keymod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Steady Hand",
-   "tag": "ability_cooldown+",
-   "desc": "-15% Ability cooldown while any Unhallowed enemy lives.",
-   "id": 84
+   "tags": [
+    "ability_cooldown+"
+   ],
+   "desc": "-15% Ability cooldown while any Unhallowed enemy lives."
   },
   {
+   "id": 85,
    "x": 1095,
    "y": 1690,
    "type": "keymod",
-   "region": "mid",
+   "region": "hybrid",
    "name": "Silence the Choir",
-   "tag": "do_CC",
-   "desc": "Unhallowed Specialists are silenced: they cannot use ranged or special attacks.",
-   "id": 85
+   "tags": [
+    "do_CC"
+   ],
+   "desc": "Unhallowed Specialists are silenced: they cannot use ranged or special attacks."
   }
  ],
  "edges": [
