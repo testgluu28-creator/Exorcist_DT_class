@@ -65,6 +65,8 @@ svg{display:block;margin:0 auto;touch-action:none}
 .tabs{display:flex;gap:6px;margin:0 0 18px}
 .tabs button{margin:0;padding:7px 4px;font-size:12px}
 .tabs button.on{border-color:var(--support);color:var(--support);background:#20242c}
+.ver{display:inline-block;margin-left:6px;padding:1px 7px;border:1px solid var(--hair);border-radius:10px;
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.08em;color:var(--muted)}
 .hint{font-size:12.5px;line-height:1.55;color:var(--muted)}
 .fld{display:block;margin:0 0 10px}
 .fld span{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11.5px;letter-spacing:.1em;
@@ -101,7 +103,7 @@ body.linking .handle{pointer-events:none}
 </style></head><body>
 <aside>
   <h1>Exorcist</h1>
-  <div class="sub">Talent tree &middot; pre-alpha mockup</div>
+  <div class="sub">Talent tree &middot; pre-alpha mockup <span class="ver" id="ver"></span></div>
   <div class="tabs"><button id="tab-build" class="on">Build</button><button id="tab-edit">Edit tree</button></div>
 
   <div id="build-panel">
@@ -123,6 +125,7 @@ body.linking .handle{pointer-events:none}
       Drag a node to move it. Click a node to rename it.<br><br>
       Every link shows a dot where it meets a node. Click a dot to pull that end loose, then click the node it should go to.
     </div>
+    <button id="add-link" class="mini">Create a link</button>
 
     <div id="insp-node" hidden>
       <h2>Node</h2>
@@ -137,7 +140,7 @@ body.linking .handle{pointer-events:none}
         <label class="fld"><span>X</span><input id="f-x" type="number" step="1"></label>
         <label class="fld"><span>Y</span><input id="f-y" type="number" step="1"></label>
       </div>
-      <button id="new-link" class="mini">Draw a link from here</button>
+      <button id="new-link" class="mini">Create a link from this node</button>
     </div>
 
     <div id="insp-edge" hidden>
@@ -145,6 +148,7 @@ body.linking .handle{pointer-events:none}
       <p class="edgeline" id="edge-a"></p>
       <p class="edgeline" id="edge-b"></p>
       <button id="del-link" class="mini">Delete this link</button>
+      <button id="add-link-2" class="mini">Create another link</button>
     </div>
 
     <h2>Options</h2>
@@ -206,6 +210,10 @@ const $ = id => document.getElementById(id);
  *   - A bare { nodes, edges } file (the original tree.json) is still accepted
  *     and read as a v1 tree section.
  * ------------------------------------------------------------------ */
+/* Bump this by hand on every code change — it is only here so you can tell
+   at a glance which build a browser tab is actually running. */
+const BUILD = '0.4';
+
 const STORE_PREFIX = 'darktide.exorcist.';
 const STORE_KEY = STORE_PREFIX + 'doc.v1';
 const LEGACY_TREE_KEY = STORE_PREFIX + 'tree.v1';
@@ -251,6 +259,7 @@ function buildDoc(){
     version: FILE_VERSION,
     savedAt: new Date().toISOString(),
     page: 'Exorcist talent tree',
+    build: BUILD,
     data: {}
   };
   for(const k in foreign) doc.data[k] = foreign[k];          // pass unknown sections through
@@ -361,6 +370,7 @@ let selNode = null, selEdge = null; // ids / edge index
 let hoverNode = null;
 let pending = null;                 // {edge, end, anchor, before} — a link end following the cursor
 let drag = null;
+let awaitFirst = false;             // waiting for the first node of a brand new link
 const undoStack = [];
 function pushUndo(snap){
   undoStack.push({tree: snap || clone(T), foreign: clone(foreign)});
@@ -431,7 +441,9 @@ function render(){
   svg.addEventListener('pointerdown', ev => {
     if(mode !== 'edit') return;
     if(ev.target === svg || ev.target.tagName === 'rect' && ev.target.getAttribute('opacity')){
-      if(pending) cancelPending(); else clearSelection();
+      if(awaitFirst) setAwaitFirst(false);
+    else if(pending) cancelPending();
+    else clearSelection();
     }
   });
   host.appendChild(svg);
@@ -529,6 +541,7 @@ function wireNode(id, g){
   g.addEventListener('pointerdown', ev => {
     if(mode === 'build') return;
     ev.preventDefault();
+    if(awaitFirst){ setAwaitFirst(false); startNewLink(id); return; }
     if(pending){ attachTo(id); return; }
     const n = byId[id], p = toSvg(ev);
     drag = {id, dx: cx(n) - p.x, dy: n.y - p.y, x0: ev.clientX, y0: ev.clientY, moved:false, snap: clone(T)};
@@ -562,7 +575,10 @@ function wireNode(id, g){
   g.addEventListener('keydown', e => {
     if(e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
-    if(mode === 'build') toggle(id); else if(pending) attachTo(id); else selectNode(id);
+    if(mode === 'build') toggle(id);
+    else if(awaitFirst){ setAwaitFirst(false); startNewLink(id); }
+    else if(pending) attachTo(id);
+    else selectNode(id);
   });
   g.addEventListener('mouseenter', ev => {
     hoverNode = id;
@@ -602,6 +618,11 @@ function updateGhost(){
   const a = byId[pending.anchor];
   ghost.setAttribute('x1', cx(a)); ghost.setAttribute('y1', a.y);
   ghost.setAttribute('x2', pending.pt.x); ghost.setAttribute('y2', pending.pt.y);
+}
+function setAwaitFirst(on){
+  awaitFirst = on;
+  document.body.classList.toggle('linking', on || !!pending);
+  T.nodes.forEach(n => { if(nodeEls[n.id]) nodeEls[n.id].g.classList.toggle('pick', on); });
 }
 function markPickTargets(){
   T.nodes.forEach(n => {
@@ -756,7 +777,7 @@ function setMode(m){
   $('edit-panel').hidden = m !== 'edit';
   document.body.classList.toggle('editing', m === 'edit');
   $('tip').style.opacity = 0;
-  cancelPending(); clearSelection();
+  setAwaitFirst(false); cancelPending(); clearSelection();
   drawHandles();
 }
 
@@ -776,7 +797,14 @@ $('tab-edit').onclick = () => setMode('edit');
 $('reset').onclick = () => { owned.clear(); owned.add(ROOT); paint(); };
 $('filt').onchange = e => { filt = e.target.value; paint(); };
 $('opt-handles').onchange = drawHandles;
-$('new-link').onclick = () => { if(selNode !== null) startNewLink(selNode); };
+$('new-link').onclick = () => { if(selNode !== null){ setAwaitFirst(false); startNewLink(selNode); } };
+const beginLink = () => {
+  cancelPending();
+  setAwaitFirst(true);
+  toast('Click the node the link starts from, then the node it runs to. Esc cancels.');
+};
+$('add-link').onclick = beginLink;
+$('add-link-2').onclick = beginLink;
 $('del-link').onclick = () => {
   if(selEdge === null) return;
   pushUndo();
@@ -839,7 +867,7 @@ window.addEventListener('pointermove', ev => {
   updateGhost(); moveHandles();
 });
 window.addEventListener('keydown', ev => {
-  if(ev.key === 'Escape'){ cancelPending(); return; }
+  if(ev.key === 'Escape'){ setAwaitFirst(false); cancelPending(); return; }
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
   if(typing) return;
   if((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z'){ ev.preventDefault(); $('undo').click(); return; }
@@ -858,6 +886,7 @@ window.addEventListener('keydown', ev => {
   }
 });
 
+$('ver').textContent = 'v' + BUILD;
 render();
 if(freshStart) toast('Your own copy of this tree now lives in this browser.');
 </script></body></html>
