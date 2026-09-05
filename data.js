@@ -81,20 +81,20 @@ window.EXORCIST_DATA = {
     'crit_damage+', 'range_crit_chance+', 'melee_crit_chance+'
   ] },
   { group: 'CC', tags: [
-    'CC_duration+', 'mtrgt_CC', 'AoE_CC', 'stagger+'
+    'CC_duration+', 'mtrgt_CC', 'AoE_CC', 'stag+', 'supress+'
   ] },
   { group: 'Survivability', tags: [
-    'mobility+', 'tough_dmgr+', 'dmgr+', 'toughness+', 'suppression+', 'gain_toughness'
+    'mob+', 'tough_dmgr+', 'dmgr+', 'tough+', 'gain_tough'
   ] },
   { group: 'Class Mechanics', tags: [
-    'soulfire_economy', 'soulfire_on_CC', 'soulfire_on_kill', 'inc-n_slot_1point',
-    'incantation_power+', 'inc-n_slot_2points'
+    'SF_economy', 'SF_on_CC', 'SF_on_kill', 'SF_on_incn_cast',
+    'inc-n_slot_1point', 'inc-n_power+', 'inc-n_slot_2points'
   ] },
   { group: 'Support', tags: [
-    'aura_radius+', 'team_damage_absorb', 'selfless', 'support', 'utility'
+    'aura_radius+', 'team_dmg_absorb', 'selfless', 'support', 'util'
   ] },
   { group: 'Misc', tags: [
-    'ability_charges+', 'ability_cooldown+', 'ability_cooldown-'
+    'ability_charges+', 'ability_CD+', 'ability_CD-'
   ] }
   ],
 
@@ -103,13 +103,27 @@ window.EXORCIST_DATA = {
      tagGroups alone: every tree file and stored copy is migrated on load,
      so nothing has to be fixed up by hand. Same for retiring one. */
   tagRenames: {
+  'soulfire_economy': 'SF_economy',
+  'soulfire_on_CC': 'SF_on_CC',
+  'stagger+': 'stag+',
+  'mobility+': 'mob+',
+  'utility': 'util',
+  'ability_cooldown+': 'ability_CD+',
+  'ability_cooldown-': 'ability_CD-',
+  'soulfire_on_kill': 'SF_on_kill',
   'crit_chance+': 'melee_crit_chance+',
   'damage_absorb': 'team_damage_absorb',
   'do_CC': 'mtrgt_CC',
   'incantation_slot_point': 'inc-n_slot_1point',
   'ranged_damage+': 'range_damage+',
   'toughness_on_CC': 'gain_toughness',
-  'vulnerability_debuff': 'vulner_debuff'
+  'vulnerability_debuff': 'vulner_debuff',
+  'incantation_power+': 'inc-n_power+',
+  'team_damage_absorb': 'team_dmg_absorb',
+  'vulner_debuff': 'vuln_debuff',
+  'suppression+': 'supress+',
+  'toughness+': 'tough+',
+  'gain_toughness': 'gain_tough'
 },
   tagRetired: ['combat_keystone', 'hybrid_keystone', 'peril_safety', 'start', 'support_keystone'],
 
