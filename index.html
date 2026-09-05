@@ -10,7 +10,7 @@
   --ink:#d6dae1; --muted:#8b93a0;
   --combat:#b4553a; --hybrid:#7d6bb0; --support:#c8a44d;
   --on:#e9edf3; --wire:#39414f; --wire-on:#c8a44d; --orphan:#c9503c;
-  --hl:#ffd34d; --done:#4fd06a;
+  --hl:#ffd34d; --done:#4fd06a; --wip:#f5d017; --almost:#49a6ff;
 }
 *{box-sizing:border-box} html,body{margin:0;height:100%}
 body{background:var(--ground);color:var(--ink);font-family:Barlow,system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
@@ -66,9 +66,15 @@ body.tags-on .nd .tglbl{display:block}
 .nd.on .lbl{fill:var(--on)}
 .nd.orphan .bg{fill:#2b1614;stroke:var(--orphan);stroke-width:2.6}
 .nd.orphan .lbl{fill:#d98b7c}
-body.editing .nd.finished .bg{fill:#1c4526;stroke:var(--done);stroke-width:2.6}
-body.editing .nd.finished .lbl{fill:#8fe3a2}
-body.editing .nd.finished .glyph{fill:#c8f5d3}
+body.editing .nd.st-finished .bg{fill:#1c4526;stroke:var(--done);stroke-width:2.6}
+body.editing .nd.st-finished .lbl{fill:#8fe3a2}
+body.editing .nd.st-finished .glyph{fill:#c8f5d3}
+body.editing .nd.st-wip .bg{fill:#4a3d0d;stroke:var(--wip);stroke-width:2.6}
+body.editing .nd.st-wip .lbl{fill:#f0dc86}
+body.editing .nd.st-wip .glyph{fill:#faeeb4}
+body.editing .nd.st-almost_done .bg{fill:#14314f;stroke:var(--almost);stroke-width:2.6}
+body.editing .nd.st-almost_done .lbl{fill:#93c7f5}
+body.editing .nd.st-almost_done .glyph{fill:#c4e2fb}
 .nd.match .bg{fill:#453714;stroke:var(--hl);stroke-width:2.8}
 .nd.match .lbl,.nd.match .glyph{fill:var(--hl)}
 .nd.match .tglbl{fill:#c9a94a}
@@ -184,6 +190,12 @@ body.linking .handle{pointer-events:none}
     <div class="row"><em><span class="swatch" style="background:var(--combat)"></span>Left &middot; combat</em><span id="r-combat">0</span></div>
     <div class="row"><em><span class="swatch" style="background:var(--support)"></span>Centre &middot; support</em><span id="r-support">0</span></div>
     <div class="row"><em><span class="swatch" style="background:var(--hybrid)"></span>Right &middot; hybrid/CC</em><span id="r-hybrid">0</span></div>
+    <h2>Your build</h2>
+    <div class="hint" style="margin-bottom:8px">Picks, incantations and weapons — everything this browser
+      keeps for the build. The tree's own shape is exported separately, from the Edit tab.</div>
+    <button id="b-exp" class="mini">Export the build to a file</button>
+    <button id="b-imp-btn" class="mini">Import a build from a file&hellip;</button>
+    <input type="file" id="b-imp" accept=".json,application/json" hidden>
     <button id="reset">Clear build</button>
   </div>
 
@@ -201,7 +213,7 @@ body.linking .handle{pointer-events:none}
       <label class="fld"><span>Id (set by the page, never changes)</span><input id="f-id" readonly></label>
       <label class="fld"><span>Name</span><input id="f-name"></label>
       <label class="fld"><span>Description</span><textarea id="f-desc" rows="5"></textarea></label>
-      <label class="chk"><input type="checkbox" id="f-finished"> Finished — happy with where this sits</label>
+      <label class="fld"><span>Design status</span><select id="f-finished"></select></label>
       <div class="fld"><span>Tags</span>
         <div class="chips" id="f-tags"></div>
         <input id="f-tag-add" list="taglist" placeholder="Type a tag, press Enter">
@@ -286,6 +298,9 @@ const SQUARE = ['keystone','ability','blitz','aura','root'];
 const GLYPH = {root:'S', keystone:'K', ability:'CA', blitz:'B', aura:'A', stat:'X'};
 const TYPES = ['root','keystone','keymod','ability','abilmod','blitz','blitzmod','aura','stat','default'];
 const REGIONS = ['combat','support','hybrid'];
+/* Design status of a node, shown only in the editor. '' means nothing to say. */
+const STATUSES = ['', 'wip', 'almost_done', 'finished'];
+const STATUS_LABEL = {'':'\u2014 none \u2014', wip:'Work in progress', almost_done:'Almost done', finished:'Finished'};
 const REGION_LABEL = {combat:'Combat', support:'Support', hybrid:'Hybrid/CC'};
 const BANDS = [[0,510,'combat','Left \u00b7 Combat'],[510,880,'support','Centre \u00b7 Support'],[880,1380,'hybrid','Right \u00b7 Hybrid/CC']];
 const NS = 'http://www.w3.org/2000/svg';
@@ -329,7 +344,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.10';
+const BUILD = '0.11';
 
 
 /* ------------------------------------------------------------------ *
@@ -450,9 +465,11 @@ function defineSection(store, name, def){ STORES[store].sections[name] = def; }
 
 /* ---- tree store: the shape of the tree itself ---- */
 defineSection('tree', 'tree', {
-  version: 3,                 /* v2: node.tag (string) became node.tags (array),
+  version: 4,                 /* v2: node.tag (string) became node.tags (array),
                                      and the 'mid' region was renamed 'hybrid'.
                                 v3: nodes carry isFinished (boolean).
+                                v4: isFinished became a string — '', 'wip',
+                                    'almost_done' or 'finished'.
                                      All three are coerced in reindex(), so older
                                      payloads and hand-written files load either way. */
   read(){ return {nodes: T.nodes, edges: T.edges}; },
@@ -668,11 +685,14 @@ const NODE_DEFAULTS = {
   name: 'Unnamed',
   tags: () => [],
   desc: '',
-  isFinished: false
+  isFinished: ''
 };
 
-let filledGaps = 0;          /* attributes supplied since the last countGaps() call.
-                                reindex() only ever adds to it — whoever is about to
+let filledGaps = 0;          /* attributes supplied *or rewritten* since the last
+                                countGaps() call — a missing value and an outdated
+                                representation both count, so either one is enough
+                                to get the stored copy written back in today's shape.
+                                reindex() only ever adds to it; whoever is about to
                                 load something zeroes it first and reads it after. */
 function countGaps(){ filledGaps = 0; }
 
@@ -690,13 +710,16 @@ function normalizeNode(n){
   if(n.tag !== undefined){                       // v1 files carried a single `tag`
     if(!Array.isArray(n.tags) || !n.tags.length) n.tags = n.tag ? [String(n.tag)] : [];
     delete n.tag;
+    filledGaps++;
   }
   if(!Array.isArray(n.tags)) n.tags = [];
   n.tags = n.tags.map(t => String(t).trim()).filter((t, i, a) => t && a.indexOf(t) === i);
-  if(n.region === 'mid') n.region = 'hybrid';    // v1 name for the right-hand band
-  n.isFinished = !!n.isFinished;
-  if(TYPES.indexOf(n.type) < 0) n.type = 'default';
-  if(REGIONS.indexOf(n.region) < 0) n.region = 'combat';
+  if(n.region === 'mid'){ n.region = 'hybrid'; filledGaps++; }   // v1 name for the right-hand band
+  if(n.isFinished === true){ n.isFinished = 'finished'; filledGaps++; }   // boolean up to v0.10
+  else if(n.isFinished === false){ n.isFinished = ''; filledGaps++; }
+  if(STATUSES.indexOf(n.isFinished) < 0){ n.isFinished = ''; filledGaps++; }
+  if(TYPES.indexOf(n.type) < 0){ n.type = 'default'; filledGaps++; }
+  if(REGIONS.indexOf(n.region) < 0){ n.region = 'combat'; filledGaps++; }
   return n;
 }
 
@@ -1094,7 +1117,7 @@ function inspector(){
   if(hasN){
     const n = byId[selNode];
     $('f-id').value = '#' + n.id;
-    $('f-finished').checked = !!n.isFinished;
+    $('f-finished').value = n.isFinished || '';
     $('f-name').value = n.name; $('f-desc').value = n.desc;
     $('f-tag-add').value = '';
     drawChips();
@@ -1296,7 +1319,7 @@ function paint(){
     g.classList.toggle('on', !editing && owned.has(n.id) && !stray);
     g.classList.toggle('orphan', stray);
     g.classList.toggle('avail', !editing && !owned.has(n.id) && avail(n.id));
-    g.classList.toggle('finished', editing && !!n.isFinished);
+    STATUSES.forEach(v => v && g.classList.toggle('st-' + v, editing && n.isFinished === v));
     g.classList.toggle('match', filtering && hit);
     g.classList.toggle('dim', filtering && !hit);
   });
@@ -1583,10 +1606,11 @@ $('f-tag-add').addEventListener('keydown', ev => {
   ev.target.value = '';
 });
 $('f-tag-add').addEventListener('blur', ev => { addTags(ev.target.value); ev.target.value = ''; });
+STATUSES.forEach(v => $('f-finished').appendChild(new Option(STATUS_LABEL[v], v)));
 $('f-finished').onchange = ev => {
   if(selNode === null) return;
   pushUndo();
-  byId[selNode].isFinished = ev.target.checked;
+  byId[selNode].isFinished = STATUSES.includes(ev.target.value) ? ev.target.value : '';
   paint(); save('tree');
 };
 $('opt-tags').onchange = ev => document.body.classList.toggle('tags-on', ev.target.checked);
@@ -1615,6 +1639,38 @@ $('exp').onclick = () => {
   a.href = URL.createObjectURL(blob);
   a.download = 'exorcist-tree-' + doc.savedAt.slice(0,10) + '.json';
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('b-exp').onclick = () => {
+  const doc = buildDoc('build');
+  const blob = new Blob([JSON.stringify(doc, null, 1)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'exorcist-build-' + doc.savedAt.slice(0,10) + '.json';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('b-imp-btn').onclick = () => $('b-imp').click();
+$('b-imp').onchange = ev => {
+  const f = ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const doc = readDoc('build', JSON.parse(r.result));
+      wipeStore('build');
+      applyDoc('build', doc);
+      /* From here on this is the same path a build takes when it comes out of
+         localStorage: ids that no longer exist are dropped, the rest are laid
+         over the current tree, and anything cut off from the root shows red. */
+      restoreBuild();
+      syncPickers();
+      save('build', true);
+      const lost = (doc.data.picks && Array.isArray(doc.data.picks.nodes) ? doc.data.picks.nodes.length : 0) - buildPicks.length;
+      toast('Loaded ' + f.name + ', replacing the build in this browser.' +
+        (lost > 0 ? ' ' + lost + ' pick(s) referred to nodes this tree no longer has.' : ''));
+    }catch(err){ toast('That file is not a saved build: ' + err.message + '.'); }
+    ev.target.value = '';
+  };
+  r.readAsText(f);
 };
 $('imp-btn').onclick = () => $('imp').click();
 $('imp').onchange = ev => {
