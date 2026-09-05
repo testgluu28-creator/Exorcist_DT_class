@@ -32,7 +32,12 @@ button{width:100%;margin-top:20px;padding:10px;background:transparent;border:1px
   color:var(--muted);border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:13px;
   letter-spacing:.1em;cursor:pointer}
 button:hover,button:focus-visible{border-color:var(--support);color:var(--support)}
-main{flex:1;position:relative;overflow:hidden;display:flex}
+main{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column}
+#topbar{display:flex;gap:12px;padding:14px 16px 0;flex:0 0 auto}
+#topbar[hidden]{display:none}
+#topbar .wpane{width:252px}
+#topbar h3{margin:0 0 9px}
+#stage{position:relative;flex:1;overflow:hidden;display:flex}
 #scroll{flex:1;overflow:auto}
 svg{display:block;margin:0 auto;touch-action:none}
 .band text{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:.22em;
@@ -50,16 +55,21 @@ svg{display:block;margin:0 auto;touch-action:none}
 .nd .lbl{font-family:'Barlow Condensed',sans-serif;font-size:10.5px;fill:var(--muted);text-anchor:middle}
 .nd .tglbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;fill:#6b7382;text-anchor:middle;display:none}
 .nd .idlbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;fill:#5b6577;text-anchor:middle;display:none}
+.nd .glyph{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;fill:#7b8494;text-anchor:middle;
+  pointer-events:none;user-select:none}
+.nd.avail .glyph{fill:#96a0b1}
+.nd.on .glyph{fill:var(--on)}
+.nd.orphan .glyph{fill:#d98b7c}
 body.ids-on .nd .idlbl{display:block}
 body.tags-on .nd .tglbl{display:block}
 .nd.on .lbl{fill:var(--on)}
 .nd.orphan .bg{fill:#2b1614;stroke:var(--orphan);stroke-width:2.6}
 .nd.orphan .lbl{fill:#d98b7c}
 .nd.dim{opacity:.22}
-#inc{position:absolute;top:16px;left:16px;width:238px;background:#101319;border:1px solid var(--hair);
-  border-radius:4px;padding:12px 14px 13px;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:6}
-#inc h3{margin:0 0 11px;font-family:'Cormorant Garamond',Georgia,serif;font-size:21px;font-weight:600;
+.pane{background:#101319;border:1px solid var(--hair);border-radius:4px;padding:12px 14px 13px}
+.pane h3{margin:0 0 11px;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:600;
   display:flex;justify-content:space-between;align-items:center}
+#inc{position:absolute;top:16px;left:16px;width:238px;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:6}
 #inc .fold{font-family:Barlow,sans-serif;font-size:15px;color:var(--muted);cursor:pointer;padding:0 4px;line-height:1}
 #inc .fold:hover,#inc .fold:focus-visible{color:var(--support)}
 #inc.folded #inc-slots{display:none}
@@ -86,7 +96,9 @@ body.tags-on .nd .tglbl{display:block}
 .pickpop .opt.hi{background:#1c2129}
 .pickpop .opt.on{color:var(--support)}
 .pickpop .opt.none{color:var(--muted)}
-.pickpop .opt.tier{border-top:1px dotted #2b323d;margin-top:4px;padding-top:7px}
+.pickpop .lvl{font-family:'Barlow Condensed',sans-serif;font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#6b7382;padding:4px 8px 2px}
+.pickpop .lvl.tier{border-top:1px dotted #2b323d;margin-top:4px;padding-top:6px}
 #tip,#inctip{position:fixed;pointer-events:none;max-width:300px;background:#0f1216;border:1px solid var(--hair);
   border-left:3px solid var(--wire);padding:11px 13px;border-radius:3px;opacity:0;transition:opacity .1s;
   box-shadow:0 10px 30px rgba(0,0,0,.6);z-index:9}
@@ -225,12 +237,18 @@ body.linking .handle{pointer-events:none}
   </div>
 </aside>
 <main>
+  <div id="topbar">
+    <section class="pane wpane" id="w-primary"><h3>Primary weapon</h3><div class="pmount"></div></section>
+    <section class="pane wpane" id="w-secondary"><h3>Secondary weapon</h3><div class="pmount"></div></section>
+  </div>
+  <div id="stage">
   <div id="scroll"><div id="host"></div></div>
-  <section id="inc" aria-label="Incantations">
+  <section id="inc" class="pane" aria-label="Incantations">
     <h3 id="inc-head">Incantations<span class="fold" id="inc-fold" role="button" tabindex="0"
       aria-label="Collapse the Incantations pane">−</span></h3>
     <div id="inc-slots"></div>
   </section>
+  </div>
 </main>
 <div id="tip"></div>
 <div id="inctip"></div>
@@ -246,6 +264,9 @@ const DEFAULT_TREE = {"nodes":[{"id":0,"x":690,"y":70,"type":"root","region":"su
 const W = 1380, H = 1920, PAD = 60;
 const SH = {root:20,keystone:19,ability:17,blitz:16,aura:16,keymod:12,abilmod:12,blitzmod:12,stat:11,default:13};
 const SQUARE = ['keystone','ability','blitz','aura','root'];
+/* A single letter drawn inside the main node of each kind, so the important
+   ones read at a glance. Their smaller *mod satellites stay blank. */
+const GLYPH = {root:'S', keystone:'K', ability:'A', blitz:'B', aura:'A', stat:'X'};
 const TYPES = ['root','keystone','keymod','ability','abilmod','blitz','blitzmod','aura','stat','default'];
 const REGIONS = ['combat','support','hybrid'];
 const REGION_LABEL = {combat:'Combat', support:'Support', hybrid:'Hybrid/CC'};
@@ -291,7 +312,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.7';
+const BUILD = '0.8';
 
 
 /* ------------------------------------------------------------------ *
@@ -340,6 +361,46 @@ function incFor(level){ return INCANTATIONS.filter(i => i.level <= level); }
 function incValid(id, level){
   const item = INC_BY_ID[id];
   return item && item.level <= level ? id : null;
+}
+
+/* ------------------------------------------------------------------ *
+ * Weapon catalogue
+ *
+ * Same idea as the incantations: one entry per weapon with an id that is
+ * unique across the list and never changes, since that id is what gets
+ * saved. `slot` decides which pane offers it.
+ * ------------------------------------------------------------------ */
+const WEAPONS = [
+  {id:'wpn_force_sword', slot:'primary', name:'Force sword',
+   desc:"Psyker's Force Sword."},
+  {id:'wpn_force_greatsword', slot:'primary', name:'Force greatsword',
+   desc:"Psyker's Force greatsword."},
+  {id:'wpn_combat_blade', slot:'primary', name:'Combat Blade', desc:''},
+  {id:'wpn_dueling_sword', slot:'primary', name:'Dueling Sword', desc:''},
+  {id:'wpn_force_lance', slot:'primary', name:'Force Lance/Halberd',
+   desc:'Identity: a quick, hassle-free short distance gap closer. An assassin weapon with above average single target damage. Takes skill to use efficiently and is not good at horde clearing; intended for aggressive, combat-oriented builds.'},
+  {id:'wpn_force_battle_hammer', slot:'primary', name:'Force Battle Hammer',
+   desc:'Identity: a slower, clunkier but safer personal defence weapon for more support-minded players, with decent damage (including anti-armour damage) and a fair amount of stagger.'},
+  {id:'wpn_voidblast_staff', slot:'secondary', name:'Voidblast staff',
+   desc:"Psyker's Voidblast staff."},
+  {id:'wpn_voidstrike_staff', slot:'secondary', name:'Voidstrike staff',
+   desc:"Psyker's Voidstrike staff."},
+  {id:'wpn_heavy_laspistol', slot:'secondary', name:'Heavy laspistol', desc:''},
+  {id:'wpn_recon_lasgun', slot:'secondary', name:'Recon lasgun', desc:''},
+  {id:'wpn_telekine_shield_staff', slot:'secondary', name:'Telekine Shield Staff',
+   desc:'A utility-focused staff.'},
+  {id:'wpn_demonbane_staff', slot:'secondary', name:'Demonbane Staff',
+   desc:'An AoE CC and burst AoE damage staff.'}
+];
+const WEAPON_BY_ID = {};
+WEAPONS.forEach(x => { WEAPON_BY_ID[x.id] = x; });
+const WEAPON_SLOTS = ['primary','secondary'];
+const WEAPON_SLOT_NAME = {primary:'Primary weapon', secondary:'Secondary weapon'};
+
+let weapons = {primary:null, secondary:null};
+function weaponValid(id, slot){
+  const w = WEAPON_BY_ID[id];
+  return w && w.slot === slot ? id : null;
 }
 
 const STORE_PREFIX = 'darktide.exorcist.';
@@ -420,6 +481,29 @@ defineSection('build', 'incantations', {
     }
   },
   reset(){ incSlots = {1:null, 2:null, 3:null}; }
+});
+
+defineSection('build', 'weapons', {
+  version: 1,
+  read(){ return {slots: WEAPON_SLOTS.map(s => ({slot:s, weapon: weapons[s]}))}; },
+  write(payload){
+    weapons = {primary:null, secondary:null};
+    const raw = payload.slots;
+    if(Array.isArray(raw)){
+      raw.forEach(entry => {
+        if(!entry || typeof entry !== 'object') return;
+        let slot = entry.slot, id = entry.weapon;
+        if(slot === undefined){                        // also accept {primary: 'some_id'}
+          const k = Object.keys(entry)[0];
+          slot = k; id = entry[k];
+        }
+        if(WEAPON_SLOTS.includes(slot)) weapons[slot] = weaponValid(id, slot);
+      });
+    }else if(raw && typeof raw === 'object'){
+      WEAPON_SLOTS.forEach(sl => { weapons[sl] = weaponValid(raw[sl], sl); });
+    }
+  },
+  reset(){ weapons = {primary:null, secondary:null}; }
 });
 
 /* Adding more page state later looks like this — nothing else has to change:
@@ -682,8 +766,15 @@ function render(){
     tgs.textContent = n.tags.join(' \u00b7 ');
     const idl = el('text', {class:'idlbl'});
     idl.textContent = '#' + n.id;
-    g.append(shape, hit, lbl, tgs, idl); gNodes.appendChild(g);
-    nodeEls[n.id] = {g, shape, hit, lbl, tgs, idl, sq};
+    g.append(shape, hit, lbl, tgs, idl);
+    let gl = null;
+    if(GLYPH[n.type]){
+      gl = el('text', {class:'glyph', 'dominant-baseline':'central'});
+      gl.textContent = GLYPH[n.type];
+      g.appendChild(gl);
+    }
+    gNodes.appendChild(g);
+    nodeEls[n.id] = {g, shape, hit, lbl, tgs, idl, gl, sq};
     wireNode(n.id, g);
     positionNode(n.id);
   });
@@ -726,6 +817,10 @@ function positionNode(id){
   o.lbl.setAttribute('x', x); o.lbl.setAttribute('y', n.y + r + 13);
   o.tgs.setAttribute('x', x); o.tgs.setAttribute('y', n.y + r + 24);
   o.idl.setAttribute('x', x); o.idl.setAttribute('y', n.y - r - 5);
+  if(o.gl){
+    o.gl.setAttribute('x', x); o.gl.setAttribute('y', n.y);
+    o.gl.setAttribute('font-size', Math.max(10, Math.round(r * 1.05)));
+  }
 }
 
 function positionEdge(i){
@@ -1123,97 +1218,105 @@ function paint(){
 }
 
 
-/* ---------------- Incantation pickers ---------------- */
-/* Native <select> cannot show a description while you browse its options, so
-   each slot is a small listbox of its own: a button plus a popup, with the
-   hovered entry's text shown in a panel to the right of the list. */
+/* ---------------- dropdown pickers ---------------- */
+/* One small listbox implementation, shared by the incantation slots and the
+   weapon panes. Native <select> cannot show a description while you browse its
+   options, so each picker is a button plus a popup, with the hovered entry's
+   text shown in a panel beside the list.
+
+   A picker is described by `sections`: each section may carry a header
+   (Support / Combat) and holds one or more tiers, each of which may carry its
+   own smaller caption (Lv I / Lv II / Lv III). Weapons use a single, plain
+   section with one unlabelled tier. */
 const pickers = {};
 let openPick = null;
 
-function buildPickers(){
-  const host = $('inc-slots');
-  host.textContent = '';
-  INC_LEVELS.forEach(level => {
-    const slot = document.createElement('div'); slot.className = 'islot';
-    const cap = document.createElement('div'); cap.className = 'icap';
-    const nm = document.createElement('b'); nm.textContent = INC_LEVEL_NAME[level];
-    const lock = document.createElement('span'); lock.className = 'lock';
-    cap.append(nm, lock);
+function createPicker(key, mount, cfg){
+  const wrap = document.createElement('div'); wrap.className = 'pickwrap';
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'pickbtn';
+  btn.setAttribute('aria-haspopup', 'listbox');
+  btn.setAttribute('aria-expanded', 'false');
+  const face = document.createElement('span');
+  const caret = document.createElement('span'); caret.className = 'caret'; caret.textContent = '\u25be';
+  btn.append(face, caret);
 
-    const wrap = document.createElement('div'); wrap.className = 'pickwrap';
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'pickbtn';
-    btn.setAttribute('aria-haspopup', 'listbox');
-    btn.setAttribute('aria-expanded', 'false');
-    const face = document.createElement('span');
-    const caret = document.createElement('span'); caret.className = 'caret'; caret.textContent = '\u25be';
-    btn.append(face, caret);
+  const pop = document.createElement('div');
+  pop.className = 'pickpop'; pop.hidden = true; pop.setAttribute('role', 'listbox');
+  const opts = [];
 
-    const pop = document.createElement('div');
-    pop.className = 'pickpop'; pop.hidden = true; pop.setAttribute('role', 'listbox');
-    const opts = [];
+  const none = document.createElement('div');
+  none.className = 'opt none'; none.textContent = 'Empty'; none.setAttribute('role', 'option');
+  none.addEventListener('click', () => choose(key, null));
+  none.addEventListener('mouseenter', () => { hi(key, none); hideIncTip(); });
+  pop.appendChild(none);
+  opts.push({el:none, item:null});
 
-    const none = document.createElement('div');
-    none.className = 'opt none'; none.textContent = 'Empty'; none.setAttribute('role', 'option');
-    none.addEventListener('click', () => choose(level, null));
-    none.addEventListener('mouseenter', () => { hi(level, none); hideIncTip(); });
-    pop.appendChild(none);
-    opts.push({el:none, item:null});
-
-    [['support','Support'],['combat','Combat']].forEach(([side, label]) => {
-      const items = incFor(level).filter(i => i.side === side);
-      if(!items.length) return;
+  cfg.sections.forEach(sec => {
+    if(!sec.tiers.some(t => t.items.length)) return;
+    if(sec.header){
       const h = document.createElement('div');
-      h.className = 'grp ' + side; h.textContent = label;
+      h.className = 'grp ' + (sec.cls || '');
+      h.textContent = sec.header;
       pop.appendChild(h);
-      let tier = items.length ? items[0].level : 0;
-      items.forEach(item => {
+    }
+    let shown = 0;
+    sec.tiers.forEach(tier => {
+      if(!tier.items.length) return;
+      if(tier.label){
+        const l = document.createElement('div');
+        l.className = 'lvl' + (shown ? ' tier' : '');
+        l.textContent = tier.label;
+        pop.appendChild(l);
+      }
+      shown++;
+      tier.items.forEach(item => {
         const o = document.createElement('div');
-        o.className = 'opt' + (item.level > tier ? ' tier' : '');
-        tier = item.level;
-        o.textContent = item.name;
-        o.setAttribute('role', 'option'); o.dataset.inc = item.id;
-        o.addEventListener('click', () => choose(level, item.id));
-        o.addEventListener('mouseenter', () => { hi(level, o); showIncTip(item, pop); });
+        o.className = 'opt'; o.textContent = item.name;
+        o.setAttribute('role', 'option'); o.dataset.pick = item.id;
+        o.addEventListener('click', () => choose(key, item.id));
+        o.addEventListener('mouseenter', () => { hi(key, o); showIncTip(item, pop); });
         pop.appendChild(o);
         opts.push({el:o, item});
       });
     });
-    pop.addEventListener('mouseleave', hideIncTip);
-
-    btn.addEventListener('click', ev => { ev.stopPropagation(); togglePick(level); });
-    btn.addEventListener('mouseenter', () => {
-      if(openPick === level) return;
-      const item = INC_BY_ID[incSlots[level]];
-      if(item) showIncTip(item, btn);
-    });
-    btn.addEventListener('mouseleave', () => { if(openPick !== level) hideIncTip(); });
-    btn.addEventListener('keydown', ev => {
-      if(ev.key === 'ArrowDown' || ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); togglePick(level, true); }
-    });
-
-    wrap.append(btn, pop);
-    slot.append(cap, wrap);
-    host.appendChild(slot);
-    pickers[level] = {btn, face, pop, opts, lock, cursor:-1};
   });
-  syncPickers();
+  pop.addEventListener('mouseleave', hideIncTip);
+
+  btn.addEventListener('click', ev => { ev.stopPropagation(); togglePick(key); });
+  btn.addEventListener('mouseenter', () => {
+    if(openPick === key) return;
+    const item = itemOf(key, cfg.get());
+    if(item) showIncTip(item, btn);
+  });
+  btn.addEventListener('mouseleave', () => { if(openPick !== key) hideIncTip(); });
+  btn.addEventListener('keydown', ev => {
+    if(ev.key === 'ArrowDown' || ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); togglePick(key, true); }
+  });
+
+  wrap.append(btn, pop);
+  mount.appendChild(wrap);
+  pickers[key] = {btn, face, pop, opts, cursor:-1, get:cfg.get, set:cfg.set, label:cfg.label, lock:cfg.lock || null};
 }
 
-function hi(level, elm){
-  const p = pickers[level];
+function itemOf(key, id){
+  const found = pickers[key].opts.find(o => o.item && o.item.id === id);
+  return found ? found.item : null;
+}
+function hi(key, elm){
+  const p = pickers[key];
   p.opts.forEach((o, i) => { const on = o.el === elm; o.el.classList.toggle('hi', on); if(on) p.cursor = i; });
 }
-function togglePick(level, viaKey){
-  if(openPick === level){ closePick(); return; }
+function togglePick(key, viaKey){
+  if(openPick === key){ closePick(); return; }
   closePick();
-  const p = pickers[level];
-  openPick = level;
+  const p = pickers[key];
+  openPick = key;
   p.pop.hidden = false;
   p.btn.classList.add('open');
   p.btn.setAttribute('aria-expanded', 'true');
-  p.cursor = Math.max(0, p.opts.findIndex(o => o.item && o.item.id === incSlots[level]));
-  if(viaKey) hi(level, p.opts[p.cursor].el);
+  p.cursor = Math.max(0, p.opts.findIndex(o => o.item && o.item.id === p.get()));
+  if(viaKey) hi(key, p.opts[p.cursor].el);
 }
 function closePick(){
   if(openPick === null) return;
@@ -1225,33 +1328,32 @@ function closePick(){
   openPick = null;
   hideIncTip();
 }
-function choose(level, id){
-  incSlots[level] = incValid(id, level);
+function choose(key, id){
+  pickers[key].set(id);
   closePick();
   syncPickers();
   save('build');
 }
 function syncPickers(){
-  INC_LEVELS.forEach(level => {
-    const p = pickers[level];
-    if(!p) return;
-    const item = INC_BY_ID[incSlots[level]];
+  for(const key in pickers){
+    const p = pickers[key];
+    const item = itemOf(key, p.get());
     p.face.textContent = item ? item.name : 'Empty';
     p.face.className = item ? '' : 'empty';
-    p.btn.setAttribute('aria-label', INC_LEVEL_NAME[level] + ' incantation: ' + (item ? item.name : 'empty'));
+    p.btn.setAttribute('aria-label', p.label + ': ' + (item ? item.name : 'empty'));
     p.opts.forEach(o => o.el.classList.toggle('on', !!item && o.item === item));
-  });
+  }
 }
 function setLock(level, unlocked){
-  const p = pickers[level];
-  if(p) p.lock.textContent = unlocked ? '' : 'not unlocked yet';
+  const p = pickers['lv' + level];
+  if(p && p.lock) p.lock.textContent = unlocked ? '' : 'not unlocked yet';
 }
 function showIncTip(item, anchor){
   const t = $('inctip');
-  t.className = item.side;
+  t.className = item.side || '';
   t.textContent = '';
   const h = document.createElement('h3'); h.textContent = item.name;
-  const p = document.createElement('p'); p.textContent = item.desc;
+  const p = document.createElement('p'); p.textContent = item.desc || 'No description yet.';
   t.append(h, p);
   t.style.opacity = 1;
   const r = anchor.getBoundingClientRect();
@@ -1265,10 +1367,54 @@ function showIncTip(item, anchor){
 }
 function hideIncTip(){ $('inctip').style.opacity = 0; }
 
+/* --- the three incantation slots --- */
+function buildIncPickers(){
+  const host = $('inc-slots');
+  host.textContent = '';
+  INC_LEVELS.forEach(level => {
+    const slot = document.createElement('div'); slot.className = 'islot';
+    const cap = document.createElement('div'); cap.className = 'icap';
+    const nm = document.createElement('b'); nm.textContent = INC_LEVEL_NAME[level];
+    const lock = document.createElement('span'); lock.className = 'lock';
+    cap.append(nm, lock);
+    slot.appendChild(cap);
+    host.appendChild(slot);
+
+    const sections = [['support','Support'],['combat','Combat']].map(([side, header]) => ({
+      header, cls: side,
+      tiers: INC_LEVELS.filter(l => l <= level).map(l => ({
+        label: INC_LEVEL_NAME[l],
+        items: INCANTATIONS.filter(i => i.side === side && i.level === l)
+      }))
+    }));
+    createPicker('lv' + level, slot, {
+      sections,
+      label: INC_LEVEL_NAME[level] + ' incantation',
+      lock,
+      get: () => incSlots[level],
+      set: id => { incSlots[level] = incValid(id, level); }
+    });
+  });
+}
+
+/* --- the two weapon panes --- */
+function buildWeaponPickers(){
+  WEAPON_SLOTS.forEach(slot => {
+    const mount = document.querySelector('#w-' + slot + ' .pmount');
+    mount.textContent = '';
+    createPicker(slot, mount, {
+      sections: [{tiers: [{items: WEAPONS.filter(x => x.slot === slot)}]}],
+      label: WEAPON_SLOT_NAME[slot],
+      get: () => weapons[slot],
+      set: id => { weapons[slot] = weaponValid(id, slot); }
+    });
+  });
+}
+
 document.addEventListener('pointerdown', ev => {
   if(openPick === null) return;
   const t = ev.target;                       // may be the document itself, or an SVG node
-  if(!(t && t.closest && t.closest('#inc'))) closePick();
+  if(!(t && t.closest && t.closest('.pane'))) closePick();
 });
 $('inc-fold').addEventListener('click', () => {
   closePick();
@@ -1302,6 +1448,7 @@ function setMode(m){
   document.body.classList.toggle('editing', m === 'edit');
   closePick();
   $('inc').hidden = (m !== 'build');
+  $('topbar').hidden = (m !== 'build');
   if(m === 'build') restoreBuild();          // the tree may have changed while editing
   $('tip').style.opacity = 0;
   setAwaitFirst(false); cancelPending(); clearSelection();
@@ -1425,7 +1572,8 @@ window.addEventListener('keydown', ev => {
 });
 
 $('ver').textContent = 'v' + BUILD;
-buildPickers();
+buildIncPickers();
+buildWeaponPickers();
 if(/[?&]reset\b/.test(location.search)){       // escape hatch: index.html?reset
   wipeStore('tree'); wipeStore('build'); resetStore('tree'); resetStore('build'); freshStart = true;
 }
