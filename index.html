@@ -39,9 +39,11 @@ h2{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;lett
 .crow.grow em{color:var(--ink)}
 .crow.grow:hover em,.crow.grow:focus-visible em{color:var(--support)}
 .crow .tw{display:inline-block;width:12px;color:var(--muted);font-size:10px}
-.crow.sub{font-size:12.5px;line-height:1.5;padding:0;border:0}
+.crow.sub{font-size:12.5px;line-height:16px;padding:0;margin:0;border:0;min-height:0}
+.crow.sub em,.crow.sub > span{margin:0;padding:0;line-height:16px}
 .crow.sub em{color:var(--muted);padding-left:14px}
-.crow.sub:first-of-type{margin-top:2px}
+.crow.sub:first-of-type{margin-top:3px}
+.crow.sub:last-child{margin-bottom:3px}
 .crow.sub + .crow.grow{margin-top:5px}
 .crow.zero em,.crow.zero > span{color:#5b6577}
 .empty-note{font-size:12.5px;color:var(--muted);padding:4px 0 2px}
@@ -112,7 +114,8 @@ body.editing .nd.st-almost_done .glyph{fill:#c4e2fb}
 #comp-tree .row span{color:var(--support);font-variant-numeric:tabular-nums}
 #comp-tree .row.zero em,#comp-tree .row.zero span{color:#5b6577}
 #comp-tree .crow.grow{font-size:13px;padding:4px 0 3px;border-bottom-color:#1c212a}
-#comp-tree .crow.sub{font-size:12px}
+#comp-tree .crow.sub{font-size:12px;line-height:15px}
+#comp-tree .crow.sub em,#comp-tree .crow.sub > span{line-height:15px}
 #inc .fold{font-family:Barlow,sans-serif;font-size:15px;color:var(--muted);cursor:pointer;padding:0 4px;line-height:1}
 #inc .fold:hover,#inc .fold:focus-visible{color:var(--support)}
 #inc.folded #inc-slots{display:none}
@@ -428,7 +431,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.16';
+const BUILD = '0.17';
 
 
 /* ------------------------------------------------------------------ *
