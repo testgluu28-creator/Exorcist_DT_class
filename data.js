@@ -23,7 +23,9 @@ window.EXORCIST_DATA = {
   layout: {
     canvasWidth: 1380,       // grow these if the tree outgrows the sheet
     canvasHeight: 1920,
-    sidePadding: 60          // node x coordinates are drawn at x + sidePadding
+    sidePadding: 60,         // node x coordinates are drawn at x + sidePadding
+    zoomMin: 0.5,            // how far the tree pane may be zoomed out (50%)
+    zoomMax: 3               // ...and in (300%)
   },
 
   /* ---- build rules ---- */

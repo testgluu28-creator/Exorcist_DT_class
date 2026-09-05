@@ -105,6 +105,12 @@ body.editing .nd.st-almost_done .glyph{fill:#c4e2fb}
 .pane h3{margin:0 0 11px;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:600;
   display:flex;justify-content:space-between;align-items:center}
 #inc{position:absolute;top:16px;left:16px;width:238px;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:6}
+#zoombar{position:absolute;top:16px;right:16px;z-index:7;display:flex;gap:4px;
+  background:#101319;border:1px solid var(--hair);border-radius:4px;padding:4px;
+  box-shadow:0 10px 26px rgba(0,0,0,.45)}
+#zoombar button{width:auto;min-width:28px;margin:0;padding:4px 7px;font-size:14px;line-height:1;
+  letter-spacing:0;font-family:Barlow,sans-serif}
+#zoombar #zoom-pct{min-width:52px;font-size:12px;font-variant-numeric:tabular-nums}
 #comp-tree{position:absolute;top:16px;left:16px;width:226px;max-height:calc(100% - 32px);overflow-y:auto;
   box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:6}
 #comp-tree h4{margin:12px 0 5px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;
@@ -313,6 +319,11 @@ body.linking .handle{pointer-events:none}
   </div>
   <div id="stage">
   <div id="scroll"><div id="host"></div></div>
+  <div id="zoombar">
+    <button id="zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
+    <button id="zoom-pct" title="Back to 100%" aria-label="Reset zoom to 100 percent">100%</button>
+    <button id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+  </div>
   <section id="comp-tree" class="pane" aria-label="Tree composition" hidden>
     <h3>Tree Composition</h3>
     <h4>By node type</h4><div id="ct-types"></div>
@@ -357,6 +368,7 @@ if(!Array.isArray(D.defaultTree.nodes) || !D.defaultTree.nodes.length)
 
 const DEFAULT_TREE = D.defaultTree;
 const W = D.layout.canvasWidth, H = D.layout.canvasHeight, PAD = D.layout.sidePadding;
+const ZOOM_MIN = D.layout.zoomMin || 0.5, ZOOM_MAX = D.layout.zoomMax || 3;
 const MAXPTS = D.rules.maxPoints;
 const SLOT_POINT_TAGS = D.rules.slotPointTags || {};
 
@@ -421,7 +433,7 @@ function weaponValid(id, slot){
 
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.18';
+const BUILD = '0.19';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -817,7 +829,8 @@ function render(){
   edgeEls.length = 0;
   const host = $('host'); host.textContent = '';
 
-  svg = el('svg', {viewBox:`0 0 ${W} ${H}`, width:W, height:H, role:'img', 'aria-label':'Exorcist talent tree'});
+  svg = el('svg', {viewBox:`0 0 ${W} ${H}`, width:Math.round(W * zoom), height:Math.round(H * zoom),
+                   role:'img', 'aria-label':'Exorcist talent tree'});
   const gBands = el('g', {});
   BANDS.forEach(([x0,x1,c,lab]) => {
     gBands.appendChild(el('rect', {x:x0, y:0, width:x1-x0, height:H, fill:`var(--${c})`, opacity:0.035}));
@@ -888,6 +901,7 @@ function render(){
 
   refreshTagLists();
 
+  applyZoom();
   drawHandles();
   syncPickers();
   paint();
@@ -969,6 +983,39 @@ function moveHandles(){
     const p = loose ? pending.pt : handlePos(h.edge, h.end);
     h.el.setAttribute('cx', p.x); h.el.setAttribute('cy', p.y);
   });
+}
+
+/* ---------------- zoom ----------------
+   The tree is scaled by resizing the <svg> itself and leaving its viewBox
+   alone, so the scroll box, hit testing and getScreenCTM() all keep working
+   without any coordinate maths of our own. */
+let zoom = 1;
+
+function applyZoom(){
+  if(svg){
+    svg.setAttribute('width', Math.round(W * zoom));
+    svg.setAttribute('height', Math.round(H * zoom));
+  }
+  $('zoom-pct').textContent = Math.round(zoom * 100) + '%';
+  $('zoom-in').disabled = zoom >= ZOOM_MAX - 0.001;
+  $('zoom-out').disabled = zoom <= ZOOM_MIN + 0.001;
+}
+
+/* Zooms towards a point on screen — the spot under the cursor, or the middle
+   of the pane for the buttons — so that spot stays where it is. */
+function setZoom(next, clientX, clientY){
+  const z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, next));
+  if(!svg || Math.abs(z - zoom) < 0.0005) return;
+  const sc = $('scroll'), box = sc.getBoundingClientRect();
+  const ax = clientX === undefined ? box.left + sc.clientWidth / 2 : clientX;
+  const ay = clientY === undefined ? box.top + sc.clientHeight / 2 : clientY;
+  const before = svg.getBoundingClientRect();
+  const ux = (ax - before.left) / zoom, uy = (ay - before.top) / zoom;   // point in svg units
+  zoom = z;
+  applyZoom();
+  const after = svg.getBoundingClientRect();
+  sc.scrollLeft += (after.left + ux * zoom) - ax;
+  sc.scrollTop  += (after.top  + uy * zoom) - ay;
 }
 
 /* ---------------- pointer plumbing ---------------- */
@@ -1701,6 +1748,16 @@ fieldEdit($('f-region'), (n,v) => n.region = v, true);
 fieldEdit($('f-x'), (n,v) => { const x = parseFloat(v); if(!isNaN(x)) n.x = x; });
 fieldEdit($('f-y'), (n,v) => { const y = parseFloat(v); if(!isNaN(y)) n.y = y; });
 
+$('zoom-in').onclick = () => setZoom(zoom * 1.2);
+$('zoom-out').onclick = () => setZoom(zoom / 1.2);
+$('zoom-pct').onclick = () => setZoom(1);
+$('scroll').addEventListener('wheel', ev => {
+  if(ev.shiftKey || ev.ctrlKey || ev.metaKey) return;      // leave scrolling and browser zoom alone
+  ev.preventDefault();
+  const dy = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY;
+  setZoom(zoom * Math.exp(-dy * 0.0015), ev.clientX, ev.clientY);
+}, {passive:false});
+
 $('tab-build').onclick = () => setMode('build');
 $('tab-edit').onclick = () => setMode('edit');
 $('reset').onclick = () => {
@@ -1852,6 +1909,9 @@ window.addEventListener('keydown', ev => {
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
   if(typing) return;
   if((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z'){ ev.preventDefault(); $('undo').click(); return; }
+  if(ev.key === '+' || ev.key === '='){ ev.preventDefault(); setZoom(zoom * 1.2); return; }
+  if(ev.key === '-' || ev.key === '_'){ ev.preventDefault(); setZoom(zoom / 1.2); return; }
+  if(ev.key === '0'){ ev.preventDefault(); setZoom(1); return; }
   if(mode !== 'edit') return;
   if((ev.key === 'Delete' || ev.key === 'Backspace') && selEdge !== null){ ev.preventDefault(); $('del-link').click(); return; }
   if(selNode !== null && ev.key.startsWith('Arrow')){
