@@ -344,7 +344,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.11';
+const BUILD = '0.12';
 
 
 /* ------------------------------------------------------------------ *
@@ -1586,7 +1586,19 @@ fieldEdit($('f-y'), (n,v) => { const y = parseFloat(v); if(!isNaN(y)) n.y = y; }
 
 $('tab-build').onclick = () => setMode('build');
 $('tab-edit').onclick = () => setMode('edit');
-$('reset').onclick = () => { owned.clear(); owned.add(ROOT); paint(); rememberBuild(); };
+$('reset').onclick = () => {
+  /* The whole build, not just the nodes: picks, incantations and weapons are
+     one thing as far as the player is concerned, and they share a store. */
+  const picked = buildPicks.length;
+  const chosen = INC_LEVELS.filter(l => incSlots[l]).length + WEAPON_SLOTS.filter(sl => weapons[sl]).length;
+  if(!picked && !chosen){ toast('The build is already empty.'); return; }
+  if(chosen && !confirm('Clear the whole build \u2014 ' + picked + ' node(s), plus your incantations and weapons?')) return;
+  resetStore('build');
+  restoreBuild();
+  syncPickers();
+  save('build', true);
+  toast('Build cleared: nodes, incantations and weapons.');
+};
 $('filt').onchange = e => { filt = e.target.value; paint(); };
 $('filt-type').onchange = e => { filtType = e.target.value; paint(); };
 $('opt-handles').onchange = drawHandles;
