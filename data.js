@@ -76,7 +76,7 @@ window.EXORCIST_DATA = {
      works — it is treated as part of Misc. */
   tagGroups: [
   { group: 'Damage', tags: [
-    'rending+', 'cleave+', 'rng_dmg+', 'give_brittle', 'melee_dmg+', 'DoT_damage+',
+    'rending+', 'cleave+', 'rng_dmg+', 'give_brittle', 'melee_dmg+', 'DoT_dmg+',
     'DoT_stacks+', 'dmg_vs_daemon+', 'attack_speed+', 'wspot_dmg+', 'vulner_debuff',
     'crit_dmg+', 'rng_crit_chance+', 'melee_crit_chance+'
   ] },
