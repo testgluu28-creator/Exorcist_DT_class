@@ -29,6 +29,8 @@ h2{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;lett
 .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px solid #232833}
 .row em{font-style:normal;color:var(--muted)}
 #comp .row em{color:var(--ink)}
+#comp .row.grow{padding:6px 0 5px}
+#comp .row.sub{padding:1px 0;border-bottom:none;line-height:1.3}
 .row.grow{cursor:pointer;user-select:none}
 .row.grow:hover em,.row.grow:focus-visible em{color:var(--support)}
 .row .tw{display:inline-block;width:12px;color:var(--muted);font-size:10px}
@@ -158,6 +160,7 @@ body.editing .nd.st-almost_done .glyph{fill:#c4e2fb}
 .fld{display:block;margin:0 0 10px}
 .fld span{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11.5px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.fld #f-tag-pick{margin-bottom:6px}
 .fld input,.fld select,.fld textarea{width:100%;background:var(--panel2);color:var(--ink);
   border:1px solid var(--hair);border-radius:3px;padding:6px 7px;font-family:Barlow,sans-serif;font-size:13px}
 .fld textarea{resize:vertical;line-height:1.45}
@@ -238,7 +241,8 @@ body.linking .handle{pointer-events:none}
       <label class="fld"><span>Design status</span><select id="f-finished"></select></label>
       <div class="fld"><span>Tags</span>
         <div class="chips" id="f-tags"></div>
-        <input id="f-tag-add" list="taglist" placeholder="Type a tag, press Enter">
+        <select id="f-tag-pick"></select>
+        <input id="f-tag-add" list="taglist" placeholder="&hellip;or type a new one, press Enter">
         <datalist id="taglist"></datalist>
       </div>
       <div class="pair">
@@ -347,6 +351,16 @@ const TAG_GROUPS = [
 ];
 const TAG_REGISTRY = TAG_GROUPS.flatMap(([, tags]) => tags);
 
+/* The groups as they stand right now: the hardcoded ones, plus any tag in use
+   that the registry has never heard of, tacked onto Misc. That way a tag typed
+   by hand still turns up in every menu and every counter instead of quietly
+   vanishing. */
+function effectiveGroups(){
+  const loose = allTags().filter(t => !TAG_REGISTRY.includes(t));
+  return TAG_GROUPS.map(([group, list]) =>
+    [group, group === 'Misc' ? list.concat(loose) : list]);
+}
+
 /* Tags that were renamed or dropped. Applied to every node on load, so an
    older file or a stale browser copy comes up to date by being opened. */
 const TAG_RENAMES = {
@@ -406,7 +420,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.14';
+const BUILD = '0.15';
 
 
 /* ------------------------------------------------------------------ *
@@ -1239,33 +1253,26 @@ function refreshTagLists(){
   const tags = allTags();
   const dl = $('taglist');
   dl.textContent = '';
-  [...new Set(TAG_REGISTRY.concat(tags))].forEach(t => dl.appendChild(new Option(t)));
+  [...new Set(TAG_REGISTRY.concat(tags))].sort().forEach(t => dl.appendChild(new Option(t)));
 
-  /* Both tag menus offer the registry, grouped, plus anything in use that the
-     registry does not know about. */
-  const loose = tags.filter(t => !TAG_REGISTRY.includes(t));
-  const fillTagSelect = (sel, current) => {
+  const groups = effectiveGroups();
+  const known = groups.flatMap(([, list]) => list);
+  const fillTagSelect = (sel, first, current) => {
     sel.textContent = '';
-    sel.appendChild(new Option('any tag',''));
-    TAG_GROUPS.forEach(([group, list]) => {
+    sel.appendChild(new Option(first, ''));
+    groups.forEach(([group, list]) => {
       const og = document.createElement('optgroup');
       og.label = group;
       list.forEach(t => og.appendChild(new Option(t, t)));
       sel.appendChild(og);
     });
-    if(loose.length){
-      const og = document.createElement('optgroup');
-      og.label = 'Ungrouped';
-      loose.forEach(t => og.appendChild(new Option(t, t)));
-      sel.appendChild(og);
-    }
-    const known = TAG_REGISTRY.concat(loose);
     const value = known.includes(current) ? current : '';
     sel.value = value;
     return value;
   };
-  filt = fillTagSelect($('filt'), filt);
-  filt2 = fillTagSelect($('filt2'), filt2);
+  filt = fillTagSelect($('filt'), 'any tag', filt);
+  filt2 = fillTagSelect($('filt2'), 'any tag', filt2);
+  fillTagSelect($('f-tag-pick'), 'pick a tag\u2026', '');
 
   const types = TYPES.filter(t => T.nodes.some(n => n.type === t));
   const ts = $('filt-type'), keepT = filtType;
@@ -1409,7 +1416,7 @@ const folded = {comp:{}, ct:{}};
 function renderGroups(host, tally, opts){
   host.textContent = '';
   let anyGroup = false;
-  TAG_GROUPS.forEach(([group, list]) => {
+  effectiveGroups().forEach(([group, list]) => {
     const members = list.map(t => [t, tally.get(t) || 0]);
     const total = members.reduce((sum, [, c]) => sum + c, 0);
     if(!total && !opts.showEmptyGroups) return;
@@ -1806,6 +1813,10 @@ const beginLink = () => {
 $('add-link').onclick = beginLink;
 $('add-node').onclick = addNodeAtCentre;
 $('del-node').onclick = () => { if(selNode !== null) deleteNode(selNode); };
+$('f-tag-pick').addEventListener('change', ev => {
+  addTags(ev.target.value);
+  ev.target.value = '';
+});
 $('f-tag-add').addEventListener('keydown', ev => {
   if(ev.key !== 'Enter' && ev.key !== ',') return;
   ev.preventDefault();
