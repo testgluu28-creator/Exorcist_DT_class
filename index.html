@@ -105,6 +105,9 @@ body.editing .nd.st-almost_done .glyph{fill:#c4e2fb}
 .pane h3{margin:0 0 11px;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:600;
   display:flex;justify-content:space-between;align-items:center}
 #inc{position:absolute;top:16px;left:16px;width:238px;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:6}
+#scroll{cursor:grab}
+body.panning{cursor:grabbing}
+body.panning #scroll,body.panning .nd,body.panning svg *{cursor:grabbing}
 #zoombar{position:absolute;top:16px;right:16px;z-index:7;display:flex;gap:4px;
   background:#101319;border:1px solid var(--hair);border-radius:4px;padding:4px;
   box-shadow:0 10px 26px rgba(0,0,0,.45)}
@@ -433,7 +436,7 @@ function weaponValid(id, slot){
 
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.19';
+const BUILD = '0.20';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -889,14 +892,8 @@ function render(){
     const p = toSvg(ev);
     addNode(p.x, p.y);
   });
-  svg.addEventListener('pointerdown', ev => {
-    if(mode !== 'edit') return;
-    if(ev.target === svg || ev.target.tagName === 'rect' && ev.target.getAttribute('opacity')){
-      if(awaitFirst) setAwaitFirst(false);
-    else if(pending) cancelPending();
-    else clearSelection();
-    }
-  });
+  /* Pressing empty canvas starts a pan; if the pointer never really moved it
+     was a click, and the click is dealt with in endPan(). */
   host.appendChild(svg);
 
   refreshTagLists();
@@ -1018,6 +1015,39 @@ function setZoom(next, clientX, clientY){
   sc.scrollTop  += (after.top  + uy * zoom) - ay;
 }
 
+/* ---------------- panning ----------------
+   Dragging empty canvas with the left button scrolls the pane, which is the
+   only sane way to get around once the tree is zoomed past the window. The
+   middle button does the same from anywhere, nodes included. */
+let pan = null;
+
+function isBackdrop(t){
+  if(!t) return false;
+  if(t === svg || t === $('scroll') || t === $('host')) return true;
+  return t.tagName === 'rect' && !!t.getAttribute('opacity');   // a region band
+}
+function startPan(ev, backdrop){
+  const sc = $('scroll');
+  pan = {x:ev.clientX, y:ev.clientY, l:sc.scrollLeft, t:sc.scrollTop, moved:false, backdrop};
+  document.body.classList.add('panning');
+}
+function movePan(ev){
+  const sc = $('scroll');
+  const dx = ev.clientX - pan.x, dy = ev.clientY - pan.y;
+  if(Math.hypot(dx, dy) > 3) pan.moved = true;
+  sc.scrollLeft = pan.l - dx;
+  sc.scrollTop  = pan.t - dy;
+}
+function endPan(){
+  const was = pan;
+  pan = null;
+  document.body.classList.remove('panning');
+  if(!was || was.moved || !was.backdrop || mode !== 'edit') return;
+  if(awaitFirst) setAwaitFirst(false);          // a plain click on empty canvas
+  else if(pending) cancelPending();
+  else clearSelection();
+}
+
 /* ---------------- pointer plumbing ---------------- */
 function toSvg(ev){
   const p = svg.createSVGPoint();
@@ -1027,7 +1057,7 @@ function toSvg(ev){
 
 function wireNode(id, g){
   g.addEventListener('pointerdown', ev => {
-    if(mode === 'build') return;
+    if(mode === 'build' || ev.button) return;      // middle/right belong to the pan handler
     ev.preventDefault();
     if(awaitFirst){ setAwaitFirst(false); startNewLink(id); return; }
     if(pending){ attachTo(id); return; }
@@ -1747,6 +1777,26 @@ fieldEdit($('f-type'), (n,v) => n.type = v, true);
 fieldEdit($('f-region'), (n,v) => n.region = v, true);
 fieldEdit($('f-x'), (n,v) => { const x = parseFloat(v); if(!isNaN(x)) n.x = x; });
 fieldEdit($('f-y'), (n,v) => { const y = parseFloat(v); if(!isNaN(y)) n.y = y; });
+
+$('scroll').addEventListener('pointerdown', ev => {
+  if(pan || drag) return;
+  if(ev.button === 1){ ev.preventDefault(); startPan(ev, false); return; }   // middle button, anywhere
+  if(ev.button !== 0 || !isBackdrop(ev.target)) return;                      // nodes and links handle themselves
+  ev.preventDefault();
+  startPan(ev, true);
+});
+window.addEventListener('pointermove', ev => { if(pan) movePan(ev); });
+window.addEventListener('pointerup', ev => {
+  endPan();
+  if(drag){                                   // the node missed its own pointerup
+    const o = nodeEls[drag.id];
+    if(o) o.g.classList.remove('drag');
+    document.body.classList.remove('dragging');
+    if(drag.moved){ pushUndo(drag.snap); save('tree'); }
+    drag = null;
+  }
+});
+window.addEventListener('pointercancel', endPan);
 
 $('zoom-in').onclick = () => setZoom(zoom * 1.2);
 $('zoom-out').onclick = () => setZoom(zoom / 1.2);
