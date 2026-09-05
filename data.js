@@ -76,9 +76,9 @@ window.EXORCIST_DATA = {
      works — it is treated as part of Misc. */
   tagGroups: [
   { group: 'Damage', tags: [
-    'rending+', 'cleave+', 'range_damage+', 'give_brittle', 'melee_damage+', 'DoT_damage+',
-    'DoT_stacks+', 'damage_vs_daemon+', 'attack_speed+', 'weakspot_damage+', 'vulner_debuff',
-    'crit_damage+', 'range_crit_chance+', 'melee_crit_chance+'
+    'rending+', 'cleave+', 'rng_dmg+', 'give_brittle', 'melee_dmg+', 'DoT_damage+',
+    'DoT_stacks+', 'dmg_vs_daemon+', 'attack_speed+', 'wspot_dmg+', 'vulner_debuff',
+    'crit_dmg+', 'rng_crit_chance+', 'melee_crit_chance+'
   ] },
   { group: 'CC', tags: [
     'CC_duration+', 'mtrgt_CC', 'AoE_CC', 'stag+', 'supress+'
@@ -103,27 +103,13 @@ window.EXORCIST_DATA = {
      tagGroups alone: every tree file and stored copy is migrated on load,
      so nothing has to be fixed up by hand. Same for retiring one. */
   tagRenames: {
-  'soulfire_economy': 'SF_economy',
-  'soulfire_on_CC': 'SF_on_CC',
-  'stagger+': 'stag+',
-  'mobility+': 'mob+',
-  'utility': 'util',
-  'ability_cooldown+': 'ability_CD+',
-  'ability_cooldown-': 'ability_CD-',
-  'soulfire_on_kill': 'SF_on_kill',
-  'crit_chance+': 'melee_crit_chance+',
-  'damage_absorb': 'team_damage_absorb',
-  'do_CC': 'mtrgt_CC',
-  'incantation_slot_point': 'inc-n_slot_1point',
-  'ranged_damage+': 'range_damage+',
-  'toughness_on_CC': 'gain_toughness',
-  'vulnerability_debuff': 'vulner_debuff',
-  'incantation_power+': 'inc-n_power+',
-  'team_damage_absorb': 'team_dmg_absorb',
-  'vulner_debuff': 'vuln_debuff',
-  'suppression+': 'supress+',
-  'toughness+': 'tough+',
-  'gain_toughness': 'gain_tough'
+  'rng_damage+': 'rng_dmg+',
+  'DoT_damage+': 'DoT_dmg+',
+  'melee_damage+': 'melee_dmg+',
+  'weakspot_damage+': 'wspot_dmg+',
+  'crit_damage+': 'crit_dmg+',
+  'range_crit_chance+': 'rng_crit_chance+',
+  'damage_vs_daemon+': 'dmg_vs_daemon+'
 },
   tagRetired: ['combat_keystone', 'hybrid_keystone', 'peril_safety', 'start', 'support_keystone'],
 
