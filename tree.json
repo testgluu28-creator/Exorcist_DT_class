@@ -7,9 +7,7 @@
    "type": "root",
    "region": "support",
    "name": "Exorcist",
-   "tags": [
-    "start"
-   ],
+   "tags": [],
    "desc": "Ecclesiarchy exorcist seconded to Grendyl's retinue. 200 HP / 85 Toughness / 5% crit."
   },
   {
@@ -68,7 +66,7 @@
    "region": "combat",
    "name": "Keen Sight",
    "tags": [
-    "crit_chance+"
+    "melee_crit_chance+"
    ],
    "desc": "+3% Critical Hit Chance."
   },
@@ -128,7 +126,7 @@
    "region": "combat",
    "name": "Dominate",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Pulls nearby mobs into an AoE and freezes them for 5s, forming an obstacle. Nearby mobs are slowed. Direct damage frees a target. Costs 1 SE."
   },
@@ -224,7 +222,7 @@
    "region": "hybrid",
    "name": "Sundering Pull",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Extracting an ally staggers enemies along the path."
   },
@@ -368,7 +366,7 @@
    "region": "hybrid",
    "name": "Telekine Fling",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Grip, lift and hurl a human-sized enemy. Charge time and swing width set distance and AoE. Impact kills the thrown target and staggers everything it hits."
   },
@@ -428,7 +426,7 @@
    "region": "hybrid",
    "name": "Wider Arc",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Telekine Fling ballistic throws gain +50% impact radius."
   },
@@ -464,7 +462,7 @@
    "region": "support",
    "name": "Parting Pulse",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Decoy's expiry pulse staggers in a 8m radius and restores 15% Toughness to allies in it."
   },
@@ -536,7 +534,7 @@
    "region": "support",
    "name": "Deeper Communion",
    "tags": [
-    "incantation_slot_point"
+    "inc-n_slot_1point"
    ],
    "desc": "Counts toward unlocking your Level II Incantation slot."
   },
@@ -560,7 +558,7 @@
    "region": "hybrid",
    "name": "Breaking Word",
    "tags": [
-    "vulnerability_debuff"
+    "vulner_debuff"
    ],
    "desc": "Staggered enemies take +8% damage from all sources."
   },
@@ -572,7 +570,7 @@
    "region": "hybrid",
    "name": "Toll of Control",
    "tags": [
-    "toughness_on_CC"
+    "gain_toughness"
    ],
    "desc": "Staggering an Elite restores 8% Toughness."
   },
@@ -631,9 +629,7 @@
    "type": "default",
    "region": "hybrid",
    "name": "Seal the Breach",
-   "tags": [
-    "peril_safety"
-   ],
+   "tags": [],
    "desc": "Consumes 2 Soul Embers to negate a Peril Overload, venting 50% Peril and staggering within 5m. 20s lockout. Will not fire while holding Quell."
   },
   {
@@ -644,7 +640,7 @@
    "region": "hybrid",
    "name": "Confound",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Elites and Monstrosities you stagger stay staggered 50% longer and cannot call for reinforcements while staggered."
   },
@@ -668,7 +664,7 @@
    "region": "hybrid",
    "name": "Weapon Jinx",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Enemies you stagger attack 20% slower for 3s."
   },
@@ -692,7 +688,7 @@
    "region": "combat",
    "name": "Ranged Doctrine",
    "tags": [
-    "ranged_damage+"
+    "range_damage+"
    ],
    "desc": "+8% Ranged Damage."
   },
@@ -776,7 +772,7 @@
    "region": "hybrid",
    "name": "Measured Force",
    "tags": [
-    "toughness_on_CC"
+    "gain_toughness"
    ],
    "desc": "Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%."
   },
@@ -787,9 +783,7 @@
    "type": "keystone",
    "region": "combat",
    "name": "Vessel of Sorrows",
-   "tags": [
-    "combat_keystone"
-   ],
+   "tags": [],
    "desc": "Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember."
   },
   {
@@ -800,7 +794,7 @@
    "region": "combat",
    "name": "Ashen Crown",
    "tags": [
-    "crit_chance+"
+    "melee_crit_chance+"
    ],
    "desc": "Each Soulblaze tier grants +4% Critical Hit Chance."
   },
@@ -848,7 +842,7 @@
    "region": "combat",
    "name": "Last Ember",
    "tags": [
-    "crit_chance+"
+    "melee_crit_chance+"
    ],
    "desc": "+10% Critical Hit Chance while at 3/3 Soul Embers."
   },
@@ -871,9 +865,7 @@
    "type": "keystone",
    "region": "support",
    "name": "Sanctic Bond",
-   "tags": [
-    "support_keystone"
-   ],
+   "tags": [],
    "desc": "Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss."
   },
   {
@@ -884,7 +876,7 @@
    "region": "support",
    "name": "Willing Burden",
    "tags": [
-    "damage_absorb"
+    "team_damage_absorb"
    ],
    "desc": "Absorb an additional 10% of allies' incoming damage."
   },
@@ -908,7 +900,7 @@
    "region": "support",
    "name": "Vow Unbroken",
    "tags": [
-    "incantation_slot_point"
+    "inc-n_slot_1point"
    ],
    "desc": "Counts toward unlocking your Level III Incantation slot."
   },
@@ -920,7 +912,7 @@
    "region": "support",
    "name": "Shared Suffering",
    "tags": [
-    "damage_absorb"
+    "team_damage_absorb"
    ],
    "desc": "Absorbed damage is split evenly across all bonded allies rather than paid by you alone."
   },
@@ -944,7 +936,7 @@
    "region": "support",
    "name": "Martyr's Ledger",
    "tags": [
-    "damage_absorb"
+    "team_damage_absorb"
    ],
    "desc": "Peril gained from Sanctic Bond is halved."
   },
@@ -955,9 +947,7 @@
    "type": "keystone",
    "region": "hybrid",
    "name": "Weaken the Veil",
-   "tags": [
-    "hybrid_keystone"
-   ],
+   "tags": [],
    "desc": "Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die."
   },
   {
@@ -968,7 +958,7 @@
    "region": "hybrid",
    "name": "Rites of Unmaking",
    "tags": [
-    "vulnerability_debuff"
+    "vulner_debuff"
    ],
    "desc": "Unhallowed enemies take an additional +10% damage."
   },
@@ -992,7 +982,7 @@
    "region": "hybrid",
    "name": "Spreading Doubt",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Killing an Unhallowed enemy staggers others within 5m."
   },
@@ -1028,7 +1018,7 @@
    "region": "hybrid",
    "name": "Silence the Choir",
    "tags": [
-    "do_CC"
+    "mtrgt_CC"
    ],
    "desc": "Unhallowed Specialists are silenced: they cannot use ranged or special attacks."
   }

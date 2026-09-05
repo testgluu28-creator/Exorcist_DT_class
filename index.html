@@ -29,6 +29,12 @@ h2{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;lett
 .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px solid #232833}
 .row em{font-style:normal;color:var(--muted)}
 #comp .row em{color:var(--ink)}
+.row.grow{cursor:pointer;user-select:none}
+.row.grow:hover em,.row.grow:focus-visible em{color:var(--support)}
+.row .tw{display:inline-block;width:12px;color:var(--muted);font-size:10px}
+.row.sub{padding-left:14px;border-bottom-color:#1a1e25}
+.row.sub em{color:var(--muted);font-size:12.5px}
+.row.zero em,.row.zero span{color:#5b6577}
 #comp .row span{color:var(--support);font-variant-numeric:tabular-nums}
 .empty-note{font-size:12.5px;color:var(--muted);padding:4px 0 2px}
 .swatch{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;vertical-align:middle}
@@ -276,8 +282,9 @@ body.linking .handle{pointer-events:none}
     <h2>Filter</h2>
     <div class="pair">
       <label class="fld"><span>Tag</span><select id="filt"></select></label>
-      <label class="fld"><span>Type</span><select id="filt-type"></select></label>
+      <label class="fld"><span>And tag</span><select id="filt2"></select></label>
     </div>
+    <label class="fld"><span>Type</span><select id="filt-type"></select></label>
     <div class="hint" id="hl-count">Both narrow each other down.</div>
   </div>
 </aside>
@@ -309,7 +316,7 @@ body.linking .handle{pointer-events:none}
  * Default topology. Used the first time this browser opens the page,
  * and by "Reset to the built-in tree". Keep it in sync with tree.json.
  * ------------------------------------------------------------------ */
-const DEFAULT_TREE = {"nodes":[{"id":0,"x":690,"y":70,"type":"root","region":"support","name":"Exorcist","tags":["start"],"desc":"Ecclesiarchy exorcist seconded to Grendyl's retinue. 200 HP / 85 Toughness / 5% crit."},{"id":1,"x":340,"y":178,"type":"default","region":"combat","name":"Rite of Wrath","tags":["melee_damage+"],"desc":"+5% Melee Damage."},{"id":2,"x":690,"y":178,"type":"default","region":"support","name":"Attentive Ministry","tags":["support"],"desc":"Allies in coherency gain +5% Toughness from all replenishment sources."},{"id":3,"x":1040,"y":178,"type":"default","region":"hybrid","name":"Braced Litany","tags":["toughness+"],"desc":"+15 Toughness."},{"id":4,"x":230,"y":286,"type":"default","region":"combat","name":"Kindled Ire","tags":["DoT_damage+"],"desc":"Soulblaze you apply deals +15% damage."},{"id":5,"x":450,"y":286,"type":"default","region":"combat","name":"Keen Sight","tags":["crit_chance+"],"desc":"+3% Critical Hit Chance."},{"id":6,"x":580,"y":286,"type":"default","region":"support","name":"Warding Hand","tags":["support"],"desc":"+20% revive and assist speed (stacks with base)."},{"id":7,"x":800,"y":286,"type":"default","region":"support","name":"Soul Thrift","tags":["soulfire_economy"],"desc":"-10% Soulfire cost on all Incantations."},{"id":8,"x":1040,"y":286,"type":"default","region":"hybrid","name":"Staggering Word","tags":["stagger+"],"desc":"+15% Impact with all weapons."},{"id":9,"x":1260,"y":286,"type":"default","region":"hybrid","name":"Wary Step","tags":["mobility+"],"desc":"+5% Movement Speed."},{"id":10,"x":340,"y":394,"type":"blitz","region":"combat","name":"Dominate","tags":["do_CC"],"desc":"Pulls nearby mobs into an AoE and freezes them for 5s, forming an obstacle. Nearby mobs are slowed. Direct damage frees a target. Costs 1 SE."},{"id":11,"x":690,"y":394,"type":"blitz","region":"support","name":"Sanctic Dome","tags":["support"],"desc":"Telekine Dome that halts daemonic entry. On dissipation, restores 50-100% of HP allies lost inside it. Costs 2-3 SE."},{"id":12,"x":1040,"y":394,"type":"blitz","region":"hybrid","name":"Telekine Palm","tags":["utility"],"desc":"Manipulate objects at range, clear hazard patches, or extract a downed ally to your position. Costs 1-2 SE."},{"id":13,"x":230,"y":502,"type":"blitzmod","region":"combat","name":"Grip of Iron","tags":["CC_duration+"],"desc":"Dominate holds targets for +2s."},{"id":14,"x":450,"y":502,"type":"blitzmod","region":"combat","name":"Immolating Grasp","tags":["DoT_stacks+"],"desc":"Enemies held by Dominate gain 4 stacks of Soulblaze."},{"id":15,"x":580,"y":502,"type":"blitzmod","region":"support","name":"Consecrated Ground","tags":["support"],"desc":"Sanctic Dome also cleanses 25% of a wound of Corruption on dissipation."},{"id":16,"x":800,"y":502,"type":"blitzmod","region":"support","name":"Ember Thrift","tags":["soulfire_economy"],"desc":"Sanctic Dome costs 1 fewer Soul Ember."},{"id":17,"x":930,"y":502,"type":"blitzmod","region":"hybrid","name":"Far Reach","tags":["utility"],"desc":"Telekine Palm range +50%. Hazard clearing radius +40%."},{"id":18,"x":1150,"y":502,"type":"blitzmod","region":"hybrid","name":"Sundering Pull","tags":["do_CC"],"desc":"Extracting an ally staggers enemies along the path."},{"id":19,"x":230,"y":610,"type":"default","region":"combat","name":"Anathema","tags":["damage_vs_daemon+"],"desc":"+20% damage to Daemonhosts and Infested."},{"id":20,"x":450,"y":610,"type":"default","region":"combat","name":"Searing Focus","tags":["DoT_stacks+"],"desc":"Critical hits apply 2 stacks of Soulblaze."},{"id":21,"x":690,"y":610,"type":"stat","region":"support","name":"Toughness Boost","tags":["toughness+"],"desc":"+20 Toughness."},{"id":22,"x":580,"y":610,"type":"default","region":"support","name":"Litany Unbroken","tags":["incantation_power+"],"desc":"Single-target Incantations restore an extra 8% Toughness."},{"id":23,"x":1040,"y":610,"type":"default","region":"hybrid","name":"Cowing Presence","tags":["suppression+"],"desc":"Staggering an enemy suppresses others within 4m."},{"id":24,"x":1260,"y":610,"type":"default","region":"hybrid","name":"White Noise","tags":["suppression+"],"desc":"Suppression you inflict lasts 1.5s longer, and suppressed shooters move 15% slower."},{"id":25,"x":340,"y":718,"type":"aura","region":"combat","name":"Psyniscience","tags":["utility"],"desc":"Specialists and Disablers within 25m are outlined for all allies in coherency, through walls."},{"id":26,"x":690,"y":718,"type":"aura","region":"support","name":"Unyielding Vigil","tags":["support"],"desc":"Allies in coherency gain +15% Toughness from all replenishment; downed allies lose downed-health 25% slower."},{"id":27,"x":1040,"y":718,"type":"aura","region":"hybrid","name":"Litany of Abjuration","tags":["support"],"desc":"Allies in coherency: +25% Corruption resistance; DoTs on them expire 30% faster."},{"id":28,"x":340,"y":826,"type":"ability","region":"combat","name":"Dome of Banishment","tags":["DoT_damage+"],"desc":"Pulls non-boss enemies into an AoE and applies 10 Soulblaze, +5 per ally also inside."},{"id":29,"x":690,"y":826,"type":"ability","region":"support","name":"Distort Vision","tags":["utility"],"desc":"Invisible for 7s and spawn an improved decoy that absorbs aggro. Support Incantations do not break stealth until they resolve."},{"id":30,"x":1040,"y":826,"type":"ability","region":"hybrid","name":"Telekine Fling","tags":["do_CC"],"desc":"Grip, lift and hurl a human-sized enemy. Charge time and swing width set distance and AoE. Impact kills the thrown target and staggers everything it hits."},{"id":31,"x":230,"y":934,"type":"abilmod","region":"combat","name":"Widening Gyre","tags":["DoT_stacks+"],"desc":"Dome of Banishment applies +4 Soulblaze per ally inside."},{"id":32,"x":450,"y":934,"type":"abilmod","region":"combat","name":"Hungering Dome","tags":["soulfire_on_kill"],"desc":"Enemies dying inside Dome of Banishment each grant Soulfire."},{"id":33,"x":580,"y":934,"type":"abilmod","region":"support","name":"Lingering Shade","tags":["support"],"desc":"Distort Vision decoy lasts +4s and taunts nearby enemies."},{"id":34,"x":800,"y":934,"type":"abilmod","region":"support","name":"Veiled Ministry","tags":["incantation_power+"],"desc":"Incantations cast from stealth cost 40% less Soulfire."},{"id":35,"x":930,"y":934,"type":"abilmod","region":"hybrid","name":"Wider Arc","tags":["do_CC"],"desc":"Telekine Fling ballistic throws gain +50% impact radius."},{"id":36,"x":1150,"y":934,"type":"abilmod","region":"hybrid","name":"Unburdened Grip","tags":["ability_cooldown+"],"desc":"Killing the thrown target refunds 20% Ability cooldown."},{"id":37,"x":340,"y":1042,"type":"abilmod","region":"combat","name":"Banishment Echo","tags":["ability_cooldown+"],"desc":"Dome of Banishment cooldown -20%."},{"id":38,"x":690,"y":1042,"type":"abilmod","region":"support","name":"Parting Pulse","tags":["do_CC"],"desc":"Decoy's expiry pulse staggers in a 8m radius and restores 15% Toughness to allies in it."},{"id":39,"x":1040,"y":1042,"type":"abilmod","region":"hybrid","name":"Second Grip","tags":["ability_charges+"],"desc":"+1 charge of Telekine Fling."},{"id":40,"x":120,"y":1042,"type":"stat","region":"combat","name":"Melee Damage Boost","tags":["melee_damage+"],"desc":"+10% Melee Damage."},{"id":41,"x":1260,"y":1042,"type":"stat","region":"hybrid","name":"Impact Boost","tags":["stagger+"],"desc":"+10% Impact."},{"id":42,"x":230,"y":1150,"type":"default","region":"combat","name":"Zealot's Cadence","tags":["attack_speed+"],"desc":"+8% Attack Speed after a Soulblaze kill."},{"id":43,"x":450,"y":1150,"type":"default","region":"combat","name":"Rent Faith","tags":["rending+"],"desc":"+10% Rending against burning enemies."},{"id":44,"x":580,"y":1150,"type":"default","region":"support","name":"Deeper Communion","tags":["incantation_slot_point"],"desc":"Counts toward unlocking your Level II Incantation slot."},{"id":45,"x":800,"y":1150,"type":"default","region":"support","name":"Unstinting Hand","tags":["support"],"desc":"Incantations cast on an ally below 50% HP also grant them +20% damage resistance for 5s."},{"id":46,"x":930,"y":1150,"type":"default","region":"hybrid","name":"Breaking Word","tags":["vulnerability_debuff"],"desc":"Staggered enemies take +8% damage from all sources."},{"id":47,"x":1150,"y":1150,"type":"default","region":"hybrid","name":"Toll of Control","tags":["toughness_on_CC"],"desc":"Staggering an Elite restores 8% Toughness."},{"id":48,"x":120,"y":1258,"type":"default","region":"combat","name":"Pyre Unbound","tags":["DoT_damage+"],"desc":"Soulblaze stacks past the normal cap, to 12."},{"id":49,"x":340,"y":1258,"type":"default","region":"combat","name":"Weakspot Doctrine","tags":["weakspot_damage+"],"desc":"+15% Weakspot Damage."},{"id":50,"x":690,"y":1258,"type":"default","region":"support","name":"Wider Communion","tags":["aura_radius+"],"desc":"+35% coherency radius. You also see exact HP and Toughness values on allies, not just cues."},{"id":51,"x":580,"y":1258,"type":"default","region":"support","name":"Vigil Eternal","tags":["support"],"desc":"Reviving an ally restores 30% Toughness to every ally in coherency. Allies in coherency also take -5% damage while you are above 50% Peril."},{"id":52,"x":1040,"y":1258,"type":"default","region":"hybrid","name":"Seal the Breach","tags":["peril_safety"],"desc":"Consumes 2 Soul Embers to negate a Peril Overload, venting 50% Peril and staggering within 5m. 20s lockout. Will not fire while holding Quell."},{"id":53,"x":1260,"y":1258,"type":"default","region":"hybrid","name":"Confound","tags":["do_CC"],"desc":"Elites and Monstrosities you stagger stay staggered 50% longer and cannot call for reinforcements while staggered."},{"id":54,"x":120,"y":610,"type":"default","region":"combat","name":"Ember Draught","tags":["soulfire_on_kill"],"desc":"Melee kills generate Soulfire."},{"id":55,"x":1260,"y":718,"type":"default","region":"hybrid","name":"Weapon Jinx","tags":["do_CC"],"desc":"Enemies you stagger attack 20% slower for 3s."},{"id":56,"x":690,"y":1150,"type":"default","region":"support","name":"Patient Litany","tags":["soulfire_economy"],"desc":"Soulfire regenerates 25% faster while no ally is below 50% Toughness."},{"id":57,"x":340,"y":1150,"type":"default","region":"combat","name":"Ranged Doctrine","tags":["ranged_damage+"],"desc":"+8% Ranged Damage."},{"id":58,"x":120,"y":1150,"type":"default","region":"combat","name":"Wrathful Cadence","tags":["attack_speed+"],"desc":"+6% Attack Speed while burning enemies are nearby."},{"id":59,"x":1040,"y":1150,"type":"stat","region":"hybrid","name":"Toughness Boost","tags":["toughness+"],"desc":"+20 Toughness."},{"id":60,"x":230,"y":1258,"type":"default","region":"combat","name":"Kindler","tags":["DoT_stacks+"],"desc":"Heavy attacks apply 1 stack of Soulblaze."},{"id":61,"x":450,"y":1258,"type":"default","region":"combat","name":"Immolate","tags":["DoT_damage+"],"desc":"Soulblaze spreads to a nearby enemy when its target dies."},{"id":62,"x":800,"y":1258,"type":"default","region":"support","name":"Unspoken Rite","tags":["incantation_power+"],"desc":"AoE Incantations affect an extra 3m, and Corruption-removing Incantations remove an extra 10% of a wound."},{"id":63,"x":930,"y":1258,"type":"default","region":"hybrid","name":"Grim Composure","tags":["toughness+"],"desc":"+10% Toughness Damage Reduction while above 75% Peril."},{"id":64,"x":1150,"y":1258,"type":"default","region":"hybrid","name":"Measured Force","tags":["toughness_on_CC"],"desc":"Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%."},{"id":65,"x":285,"y":1366,"type":"keystone","region":"combat","name":"Vessel of Sorrows","tags":["combat_keystone"],"desc":"Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember."},{"id":66,"x":175,"y":1474,"type":"keymod","region":"combat","name":"Ashen Crown","tags":["crit_chance+"],"desc":"Each Soulblaze tier grants +4% Critical Hit Chance."},{"id":67,"x":285,"y":1474,"type":"keymod","region":"combat","name":"Unspent Wrath","tags":["DoT_damage+"],"desc":"Each Soulblaze tier grants +8% damage to burning targets."},{"id":68,"x":395,"y":1474,"type":"keymod","region":"combat","name":"Cinder Hoard","tags":["soulfire_on_kill"],"desc":"Soulblaze kills generate +30% Soulfire."},{"id":69,"x":230,"y":1582,"type":"keymod","region":"combat","name":"Wrath Sustained","tags":["DoT_stacks+"],"desc":"Soulblaze tiers decay one step slower."},{"id":70,"x":340,"y":1582,"type":"keymod","region":"combat","name":"Last Ember","tags":["crit_chance+"],"desc":"+10% Critical Hit Chance while at 3/3 Soul Embers."},{"id":71,"x":285,"y":1690,"type":"keymod","region":"combat","name":"Final Pyre","tags":["DoT_damage+"],"desc":"Soulblaze on Elites deals +25% damage."},{"id":72,"x":690,"y":1366,"type":"keystone","region":"support","name":"Sanctic Bond","tags":["support_keystone"],"desc":"Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss."},{"id":73,"x":580,"y":1474,"type":"keymod","region":"support","name":"Willing Burden","tags":["damage_absorb"],"desc":"Absorb an additional 10% of allies' incoming damage."},{"id":74,"x":690,"y":1474,"type":"keymod","region":"support","name":"Tempered Vessel","tags":["toughness+"],"desc":"+20% Toughness Damage Reduction while Sanctic Bond is active."},{"id":75,"x":800,"y":1474,"type":"keymod","region":"support","name":"Vow Unbroken","tags":["incantation_slot_point"],"desc":"Counts toward unlocking your Level III Incantation slot."},{"id":76,"x":635,"y":1582,"type":"keymod","region":"support","name":"Shared Suffering","tags":["damage_absorb"],"desc":"Absorbed damage is split evenly across all bonded allies rather than paid by you alone."},{"id":77,"x":745,"y":1582,"type":"keymod","region":"support","name":"Anchored Faith","tags":["support"],"desc":"Bonded allies cannot be reduced below 1 HP by a single hit once per 60s."},{"id":78,"x":690,"y":1690,"type":"keymod","region":"support","name":"Martyr's Ledger","tags":["damage_absorb"],"desc":"Peril gained from Sanctic Bond is halved."},{"id":79,"x":1095,"y":1366,"type":"keystone","region":"hybrid","name":"Weaken the Veil","tags":["hybrid_keystone"],"desc":"Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die."},{"id":80,"x":985,"y":1474,"type":"keymod","region":"hybrid","name":"Rites of Unmaking","tags":["vulnerability_debuff"],"desc":"Unhallowed enemies take an additional +10% damage."},{"id":81,"x":1095,"y":1474,"type":"keymod","region":"hybrid","name":"Warden's Toll","tags":["soulfire_on_CC"],"desc":"Unhallowed enemies grant +50% Soulfire on death."},{"id":82,"x":1205,"y":1474,"type":"keymod","region":"hybrid","name":"Spreading Doubt","tags":["do_CC"],"desc":"Killing an Unhallowed enemy staggers others within 5m."},{"id":83,"x":1040,"y":1582,"type":"keymod","region":"hybrid","name":"Hollow Ranks","tags":["suppression+"],"desc":"Unhallowed enemies suppress their neighbours."},{"id":84,"x":1150,"y":1582,"type":"keymod","region":"hybrid","name":"Steady Hand","tags":["ability_cooldown+"],"desc":"-15% Ability cooldown while any Unhallowed enemy lives."},{"id":85,"x":1095,"y":1690,"type":"keymod","region":"hybrid","name":"Silence the Choir","tags":["do_CC"],"desc":"Unhallowed Specialists are silenced: they cannot use ranged or special attacks."}],"edges":[[0,2],[1,4],[1,5],[1,6],[2,5],[2,6],[2,7],[3,7],[3,8],[3,9],[4,10],[5,10],[6,11],[7,11],[8,12],[9,12],[10,13],[10,14],[10,15],[11,14],[11,15],[11,16],[11,17],[12,16],[12,17],[12,18],[13,19],[13,54],[14,19],[14,20],[14,22],[15,20],[15,21],[15,22],[16,21],[17,23],[18,23],[18,24],[19,25],[20,25],[21,26],[22,21],[22,26],[23,27],[23,55],[24,27],[24,55],[25,28],[26,29],[27,30],[28,31],[28,32],[28,33],[29,32],[29,33],[29,34],[29,35],[30,34],[30,35],[30,36],[31,37],[31,40],[32,37],[33,38],[34,38],[35,39],[36,39],[36,41],[37,42],[37,43],[37,44],[37,57],[37,58],[38,43],[38,44],[38,45],[38,46],[38,56],[39,45],[39,46],[39,47],[39,59],[40,42],[40,57],[40,58],[41,47],[41,59],[42,48],[42,49],[42,57],[42,60],[43,61],[44,50],[44,51],[44,56],[45,62],[46,52],[46,59],[46,63],[47,53],[47,64],[48,60],[48,65],[49,61],[49,65],[50,62],[50,72],[51,50],[51,72],[52,64],[52,79],[53,79],[54,19],[54,25],[55,30],[56,45],[56,50],[56,51],[56,62],[57,43],[57,49],[57,60],[57,61],[58,42],[58,48],[59,47],[59,52],[59,53],[59,63],[59,64],[60,49],[60,65],[62,72],[63,52],[64,53],[64,79],[65,66],[65,67],[65,68],[66,69],[67,69],[67,70],[68,70],[69,71],[70,71],[72,73],[72,74],[72,75],[73,76],[74,76],[74,77],[75,77],[76,78],[77,78],[79,80],[79,81],[79,82],[80,83],[81,83],[81,84],[82,84],[83,85],[84,85]]};
+const DEFAULT_TREE = {"nodes":[{"id":0,"x":690,"y":70,"type":"root","region":"support","name":"Exorcist","tags":[],"desc":"Ecclesiarchy exorcist seconded to Grendyl's retinue. 200 HP / 85 Toughness / 5% crit."},{"id":1,"x":340,"y":178,"type":"default","region":"combat","name":"Rite of Wrath","tags":["melee_damage+"],"desc":"+5% Melee Damage."},{"id":2,"x":690,"y":178,"type":"default","region":"support","name":"Attentive Ministry","tags":["support"],"desc":"Allies in coherency gain +5% Toughness from all replenishment sources."},{"id":3,"x":1040,"y":178,"type":"default","region":"hybrid","name":"Braced Litany","tags":["toughness+"],"desc":"+15 Toughness."},{"id":4,"x":230,"y":286,"type":"default","region":"combat","name":"Kindled Ire","tags":["DoT_damage+"],"desc":"Soulblaze you apply deals +15% damage."},{"id":5,"x":450,"y":286,"type":"default","region":"combat","name":"Keen Sight","tags":["melee_crit_chance+"],"desc":"+3% Critical Hit Chance."},{"id":6,"x":580,"y":286,"type":"default","region":"support","name":"Warding Hand","tags":["support"],"desc":"+20% revive and assist speed (stacks with base)."},{"id":7,"x":800,"y":286,"type":"default","region":"support","name":"Soul Thrift","tags":["soulfire_economy"],"desc":"-10% Soulfire cost on all Incantations."},{"id":8,"x":1040,"y":286,"type":"default","region":"hybrid","name":"Staggering Word","tags":["stagger+"],"desc":"+15% Impact with all weapons."},{"id":9,"x":1260,"y":286,"type":"default","region":"hybrid","name":"Wary Step","tags":["mobility+"],"desc":"+5% Movement Speed."},{"id":10,"x":340,"y":394,"type":"blitz","region":"combat","name":"Dominate","tags":["mtrgt_CC"],"desc":"Pulls nearby mobs into an AoE and freezes them for 5s, forming an obstacle. Nearby mobs are slowed. Direct damage frees a target. Costs 1 SE."},{"id":11,"x":690,"y":394,"type":"blitz","region":"support","name":"Sanctic Dome","tags":["support"],"desc":"Telekine Dome that halts daemonic entry. On dissipation, restores 50-100% of HP allies lost inside it. Costs 2-3 SE."},{"id":12,"x":1040,"y":394,"type":"blitz","region":"hybrid","name":"Telekine Palm","tags":["utility"],"desc":"Manipulate objects at range, clear hazard patches, or extract a downed ally to your position. Costs 1-2 SE."},{"id":13,"x":230,"y":502,"type":"blitzmod","region":"combat","name":"Grip of Iron","tags":["CC_duration+"],"desc":"Dominate holds targets for +2s."},{"id":14,"x":450,"y":502,"type":"blitzmod","region":"combat","name":"Immolating Grasp","tags":["DoT_stacks+"],"desc":"Enemies held by Dominate gain 4 stacks of Soulblaze."},{"id":15,"x":580,"y":502,"type":"blitzmod","region":"support","name":"Consecrated Ground","tags":["support"],"desc":"Sanctic Dome also cleanses 25% of a wound of Corruption on dissipation."},{"id":16,"x":800,"y":502,"type":"blitzmod","region":"support","name":"Ember Thrift","tags":["soulfire_economy"],"desc":"Sanctic Dome costs 1 fewer Soul Ember."},{"id":17,"x":930,"y":502,"type":"blitzmod","region":"hybrid","name":"Far Reach","tags":["utility"],"desc":"Telekine Palm range +50%. Hazard clearing radius +40%."},{"id":18,"x":1150,"y":502,"type":"blitzmod","region":"hybrid","name":"Sundering Pull","tags":["mtrgt_CC"],"desc":"Extracting an ally staggers enemies along the path."},{"id":19,"x":230,"y":610,"type":"default","region":"combat","name":"Anathema","tags":["damage_vs_daemon+"],"desc":"+20% damage to Daemonhosts and Infested."},{"id":20,"x":450,"y":610,"type":"default","region":"combat","name":"Searing Focus","tags":["DoT_stacks+"],"desc":"Critical hits apply 2 stacks of Soulblaze."},{"id":21,"x":690,"y":610,"type":"stat","region":"support","name":"Toughness Boost","tags":["toughness+"],"desc":"+20 Toughness."},{"id":22,"x":580,"y":610,"type":"default","region":"support","name":"Litany Unbroken","tags":["incantation_power+"],"desc":"Single-target Incantations restore an extra 8% Toughness."},{"id":23,"x":1040,"y":610,"type":"default","region":"hybrid","name":"Cowing Presence","tags":["suppression+"],"desc":"Staggering an enemy suppresses others within 4m."},{"id":24,"x":1260,"y":610,"type":"default","region":"hybrid","name":"White Noise","tags":["suppression+"],"desc":"Suppression you inflict lasts 1.5s longer, and suppressed shooters move 15% slower."},{"id":25,"x":340,"y":718,"type":"aura","region":"combat","name":"Psyniscience","tags":["utility"],"desc":"Specialists and Disablers within 25m are outlined for all allies in coherency, through walls."},{"id":26,"x":690,"y":718,"type":"aura","region":"support","name":"Unyielding Vigil","tags":["support"],"desc":"Allies in coherency gain +15% Toughness from all replenishment; downed allies lose downed-health 25% slower."},{"id":27,"x":1040,"y":718,"type":"aura","region":"hybrid","name":"Litany of Abjuration","tags":["support"],"desc":"Allies in coherency: +25% Corruption resistance; DoTs on them expire 30% faster."},{"id":28,"x":340,"y":826,"type":"ability","region":"combat","name":"Dome of Banishment","tags":["DoT_damage+"],"desc":"Pulls non-boss enemies into an AoE and applies 10 Soulblaze, +5 per ally also inside."},{"id":29,"x":690,"y":826,"type":"ability","region":"support","name":"Distort Vision","tags":["utility"],"desc":"Invisible for 7s and spawn an improved decoy that absorbs aggro. Support Incantations do not break stealth until they resolve."},{"id":30,"x":1040,"y":826,"type":"ability","region":"hybrid","name":"Telekine Fling","tags":["mtrgt_CC"],"desc":"Grip, lift and hurl a human-sized enemy. Charge time and swing width set distance and AoE. Impact kills the thrown target and staggers everything it hits."},{"id":31,"x":230,"y":934,"type":"abilmod","region":"combat","name":"Widening Gyre","tags":["DoT_stacks+"],"desc":"Dome of Banishment applies +4 Soulblaze per ally inside."},{"id":32,"x":450,"y":934,"type":"abilmod","region":"combat","name":"Hungering Dome","tags":["soulfire_on_kill"],"desc":"Enemies dying inside Dome of Banishment each grant Soulfire."},{"id":33,"x":580,"y":934,"type":"abilmod","region":"support","name":"Lingering Shade","tags":["support"],"desc":"Distort Vision decoy lasts +4s and taunts nearby enemies."},{"id":34,"x":800,"y":934,"type":"abilmod","region":"support","name":"Veiled Ministry","tags":["incantation_power+"],"desc":"Incantations cast from stealth cost 40% less Soulfire."},{"id":35,"x":930,"y":934,"type":"abilmod","region":"hybrid","name":"Wider Arc","tags":["mtrgt_CC"],"desc":"Telekine Fling ballistic throws gain +50% impact radius."},{"id":36,"x":1150,"y":934,"type":"abilmod","region":"hybrid","name":"Unburdened Grip","tags":["ability_cooldown+"],"desc":"Killing the thrown target refunds 20% Ability cooldown."},{"id":37,"x":340,"y":1042,"type":"abilmod","region":"combat","name":"Banishment Echo","tags":["ability_cooldown+"],"desc":"Dome of Banishment cooldown -20%."},{"id":38,"x":690,"y":1042,"type":"abilmod","region":"support","name":"Parting Pulse","tags":["mtrgt_CC"],"desc":"Decoy's expiry pulse staggers in a 8m radius and restores 15% Toughness to allies in it."},{"id":39,"x":1040,"y":1042,"type":"abilmod","region":"hybrid","name":"Second Grip","tags":["ability_charges+"],"desc":"+1 charge of Telekine Fling."},{"id":40,"x":120,"y":1042,"type":"stat","region":"combat","name":"Melee Damage Boost","tags":["melee_damage+"],"desc":"+10% Melee Damage."},{"id":41,"x":1260,"y":1042,"type":"stat","region":"hybrid","name":"Impact Boost","tags":["stagger+"],"desc":"+10% Impact."},{"id":42,"x":230,"y":1150,"type":"default","region":"combat","name":"Zealot's Cadence","tags":["attack_speed+"],"desc":"+8% Attack Speed after a Soulblaze kill."},{"id":43,"x":450,"y":1150,"type":"default","region":"combat","name":"Rent Faith","tags":["rending+"],"desc":"+10% Rending against burning enemies."},{"id":44,"x":580,"y":1150,"type":"default","region":"support","name":"Deeper Communion","tags":["inc-n_slot_1point"],"desc":"Counts toward unlocking your Level II Incantation slot."},{"id":45,"x":800,"y":1150,"type":"default","region":"support","name":"Unstinting Hand","tags":["support"],"desc":"Incantations cast on an ally below 50% HP also grant them +20% damage resistance for 5s."},{"id":46,"x":930,"y":1150,"type":"default","region":"hybrid","name":"Breaking Word","tags":["vulner_debuff"],"desc":"Staggered enemies take +8% damage from all sources."},{"id":47,"x":1150,"y":1150,"type":"default","region":"hybrid","name":"Toll of Control","tags":["gain_toughness"],"desc":"Staggering an Elite restores 8% Toughness."},{"id":48,"x":120,"y":1258,"type":"default","region":"combat","name":"Pyre Unbound","tags":["DoT_damage+"],"desc":"Soulblaze stacks past the normal cap, to 12."},{"id":49,"x":340,"y":1258,"type":"default","region":"combat","name":"Weakspot Doctrine","tags":["weakspot_damage+"],"desc":"+15% Weakspot Damage."},{"id":50,"x":690,"y":1258,"type":"default","region":"support","name":"Wider Communion","tags":["aura_radius+"],"desc":"+35% coherency radius. You also see exact HP and Toughness values on allies, not just cues."},{"id":51,"x":580,"y":1258,"type":"default","region":"support","name":"Vigil Eternal","tags":["support"],"desc":"Reviving an ally restores 30% Toughness to every ally in coherency. Allies in coherency also take -5% damage while you are above 50% Peril."},{"id":52,"x":1040,"y":1258,"type":"default","region":"hybrid","name":"Seal the Breach","tags":[],"desc":"Consumes 2 Soul Embers to negate a Peril Overload, venting 50% Peril and staggering within 5m. 20s lockout. Will not fire while holding Quell."},{"id":53,"x":1260,"y":1258,"type":"default","region":"hybrid","name":"Confound","tags":["mtrgt_CC"],"desc":"Elites and Monstrosities you stagger stay staggered 50% longer and cannot call for reinforcements while staggered."},{"id":54,"x":120,"y":610,"type":"default","region":"combat","name":"Ember Draught","tags":["soulfire_on_kill"],"desc":"Melee kills generate Soulfire."},{"id":55,"x":1260,"y":718,"type":"default","region":"hybrid","name":"Weapon Jinx","tags":["mtrgt_CC"],"desc":"Enemies you stagger attack 20% slower for 3s."},{"id":56,"x":690,"y":1150,"type":"default","region":"support","name":"Patient Litany","tags":["soulfire_economy"],"desc":"Soulfire regenerates 25% faster while no ally is below 50% Toughness."},{"id":57,"x":340,"y":1150,"type":"default","region":"combat","name":"Ranged Doctrine","tags":["range_damage+"],"desc":"+8% Ranged Damage."},{"id":58,"x":120,"y":1150,"type":"default","region":"combat","name":"Wrathful Cadence","tags":["attack_speed+"],"desc":"+6% Attack Speed while burning enemies are nearby."},{"id":59,"x":1040,"y":1150,"type":"stat","region":"hybrid","name":"Toughness Boost","tags":["toughness+"],"desc":"+20 Toughness."},{"id":60,"x":230,"y":1258,"type":"default","region":"combat","name":"Kindler","tags":["DoT_stacks+"],"desc":"Heavy attacks apply 1 stack of Soulblaze."},{"id":61,"x":450,"y":1258,"type":"default","region":"combat","name":"Immolate","tags":["DoT_damage+"],"desc":"Soulblaze spreads to a nearby enemy when its target dies."},{"id":62,"x":800,"y":1258,"type":"default","region":"support","name":"Unspoken Rite","tags":["incantation_power+"],"desc":"AoE Incantations affect an extra 3m, and Corruption-removing Incantations remove an extra 10% of a wound."},{"id":63,"x":930,"y":1258,"type":"default","region":"hybrid","name":"Grim Composure","tags":["toughness+"],"desc":"+10% Toughness Damage Reduction while above 75% Peril."},{"id":64,"x":1150,"y":1258,"type":"default","region":"hybrid","name":"Measured Force","tags":["gain_toughness"],"desc":"Freezing an enemy with Dominate restores 5% Toughness per target, up to 20%."},{"id":65,"x":285,"y":1366,"type":"keystone","region":"combat","name":"Vessel of Sorrows","tags":[],"desc":"Combat keystone. While at 3/3 Soul Embers (Soulblaze state), gain escalating offensive bonuses that decay one tier each time you spend an Ember."},{"id":66,"x":175,"y":1474,"type":"keymod","region":"combat","name":"Ashen Crown","tags":["melee_crit_chance+"],"desc":"Each Soulblaze tier grants +4% Critical Hit Chance."},{"id":67,"x":285,"y":1474,"type":"keymod","region":"combat","name":"Unspent Wrath","tags":["DoT_damage+"],"desc":"Each Soulblaze tier grants +8% damage to burning targets."},{"id":68,"x":395,"y":1474,"type":"keymod","region":"combat","name":"Cinder Hoard","tags":["soulfire_on_kill"],"desc":"Soulblaze kills generate +30% Soulfire."},{"id":69,"x":230,"y":1582,"type":"keymod","region":"combat","name":"Wrath Sustained","tags":["DoT_stacks+"],"desc":"Soulblaze tiers decay one step slower."},{"id":70,"x":340,"y":1582,"type":"keymod","region":"combat","name":"Last Ember","tags":["melee_crit_chance+"],"desc":"+10% Critical Hit Chance while at 3/3 Soul Embers."},{"id":71,"x":285,"y":1690,"type":"keymod","region":"combat","name":"Final Pyre","tags":["DoT_damage+"],"desc":"Soulblaze on Elites deals +25% damage."},{"id":72,"x":690,"y":1366,"type":"keystone","region":"support","name":"Sanctic Bond","tags":[],"desc":"Support keystone. Absorb a portion of the damage allies in coherency suffer; the absorbed damage is converted into Peril rather than Toughness loss."},{"id":73,"x":580,"y":1474,"type":"keymod","region":"support","name":"Willing Burden","tags":["team_damage_absorb"],"desc":"Absorb an additional 10% of allies' incoming damage."},{"id":74,"x":690,"y":1474,"type":"keymod","region":"support","name":"Tempered Vessel","tags":["toughness+"],"desc":"+20% Toughness Damage Reduction while Sanctic Bond is active."},{"id":75,"x":800,"y":1474,"type":"keymod","region":"support","name":"Vow Unbroken","tags":["inc-n_slot_1point"],"desc":"Counts toward unlocking your Level III Incantation slot."},{"id":76,"x":635,"y":1582,"type":"keymod","region":"support","name":"Shared Suffering","tags":["team_damage_absorb"],"desc":"Absorbed damage is split evenly across all bonded allies rather than paid by you alone."},{"id":77,"x":745,"y":1582,"type":"keymod","region":"support","name":"Anchored Faith","tags":["support"],"desc":"Bonded allies cannot be reduced below 1 HP by a single hit once per 60s."},{"id":78,"x":690,"y":1690,"type":"keymod","region":"support","name":"Martyr's Ledger","tags":["team_damage_absorb"],"desc":"Peril gained from Sanctic Bond is halved."},{"id":79,"x":1095,"y":1366,"type":"keystone","region":"hybrid","name":"Weaken the Veil","tags":[],"desc":"Hybrid keystone. Enemies you stagger, freeze or disable become Unhallowed: they take increased damage from all sources and grant you Soulfire when they die."},{"id":80,"x":985,"y":1474,"type":"keymod","region":"hybrid","name":"Rites of Unmaking","tags":["vulner_debuff"],"desc":"Unhallowed enemies take an additional +10% damage."},{"id":81,"x":1095,"y":1474,"type":"keymod","region":"hybrid","name":"Warden's Toll","tags":["soulfire_on_CC"],"desc":"Unhallowed enemies grant +50% Soulfire on death."},{"id":82,"x":1205,"y":1474,"type":"keymod","region":"hybrid","name":"Spreading Doubt","tags":["mtrgt_CC"],"desc":"Killing an Unhallowed enemy staggers others within 5m."},{"id":83,"x":1040,"y":1582,"type":"keymod","region":"hybrid","name":"Hollow Ranks","tags":["suppression+"],"desc":"Unhallowed enemies suppress their neighbours."},{"id":84,"x":1150,"y":1582,"type":"keymod","region":"hybrid","name":"Steady Hand","tags":["ability_cooldown+"],"desc":"-15% Ability cooldown while any Unhallowed enemy lives."},{"id":85,"x":1095,"y":1690,"type":"keymod","region":"hybrid","name":"Silence the Choir","tags":["mtrgt_CC"],"desc":"Unhallowed Specialists are silenced: they cannot use ranged or special attacks."}],"edges":[[0,2],[1,4],[1,5],[1,6],[2,5],[2,6],[2,7],[3,7],[3,8],[3,9],[4,10],[5,10],[6,11],[7,11],[8,12],[9,12],[10,13],[10,14],[10,15],[11,14],[11,15],[11,16],[11,17],[12,16],[12,17],[12,18],[13,19],[13,54],[14,19],[14,20],[14,22],[15,20],[15,21],[15,22],[16,21],[17,23],[18,23],[18,24],[19,25],[20,25],[21,26],[22,21],[22,26],[23,27],[23,55],[24,27],[24,55],[25,28],[26,29],[27,30],[28,31],[28,32],[28,33],[29,32],[29,33],[29,34],[29,35],[30,34],[30,35],[30,36],[31,37],[31,40],[32,37],[33,38],[34,38],[35,39],[36,39],[36,41],[37,42],[37,43],[37,44],[37,57],[37,58],[38,43],[38,44],[38,45],[38,46],[38,56],[39,45],[39,46],[39,47],[39,59],[40,42],[40,57],[40,58],[41,47],[41,59],[42,48],[42,49],[42,57],[42,60],[43,61],[44,50],[44,51],[44,56],[45,62],[46,52],[46,59],[46,63],[47,53],[47,64],[48,60],[48,65],[49,61],[49,65],[50,62],[50,72],[51,50],[51,72],[52,64],[52,79],[53,79],[54,19],[54,25],[55,30],[56,45],[56,50],[56,51],[56,62],[57,43],[57,49],[57,60],[57,61],[58,42],[58,48],[59,47],[59,52],[59,53],[59,63],[59,64],[60,49],[60,65],[62,72],[63,52],[64,53],[64,79],[65,66],[65,67],[65,68],[66,69],[67,69],[67,70],[68,70],[69,71],[70,71],[72,73],[72,74],[72,75],[73,76],[74,76],[74,77],[75,77],[76,78],[77,78],[79,80],[79,81],[79,82],[80,83],[81,83],[81,84],[82,84],[83,85],[84,85]]};
 
 const W = 1380, H = 1920, PAD = 60;
 const SH = {root:20,keystone:19,ability:17,blitz:16,aura:16,keymod:12,abilmod:12,blitzmod:12,stat:11,default:13};
@@ -319,6 +326,40 @@ const SQUARE = ['keystone','ability','blitz','aura','root'];
 const GLYPH = {root:'S', keystone:'K', ability:'CA', blitz:'B', aura:'A', stat:'X'};
 const TYPES = ['root','keystone','keymod','ability','abilmod','blitz','blitzmod','aura','stat','default'];
 const REGIONS = ['combat','support','hybrid'];
+/* ------------------------------------------------------------------ *
+ * Tag registry
+ *
+ * The tags a node may carry, grouped by what they do. The groups drive the
+ * folding counters in the two composition panes and the filter dropdowns; a
+ * tag that belongs to no group is still allowed on a node, but is not shown
+ * in those panes.
+ * ------------------------------------------------------------------ */
+const TAG_GROUPS = [
+  ['Damage', ['rending+','cleave+','range_damage+','give_brittle','melee_damage+','DoT_damage+',
+              'DoT_stacks+','damage_vs_daemon+','attack_speed+','weakspot_damage+','vulner_debuff',
+              'crit_damage+','range_crit_chance+','melee_crit_chance+']],
+  ['CC', ['CC_duration+','mtrgt_CC','AoE_CC','stagger+']],
+  ['Survivability', ['mobility+','tough_dmgr+','dmgr+','toughness+','suppression+','gain_toughness']],
+  ['Class Mechanics', ['soulfire_economy','soulfire_on_CC','soulfire_on_kill','inc-n_slot_1point',
+                       'incantation_power+','inc-n_slot_2points']],
+  ['Support', ['aura_radius+','team_damage_absorb','selfless','support','utility']],
+  ['Misc', ['ability_charges+','ability_cooldown+','ability_cooldown-']]
+];
+const TAG_REGISTRY = TAG_GROUPS.flatMap(([, tags]) => tags);
+
+/* Tags that were renamed or dropped. Applied to every node on load, so an
+   older file or a stale browser copy comes up to date by being opened. */
+const TAG_RENAMES = {
+  'crit_chance+': 'melee_crit_chance+',
+  'damage_absorb': 'team_damage_absorb',
+  'do_CC': 'mtrgt_CC',
+  'incantation_slot_point': 'inc-n_slot_1point',
+  'ranged_damage+': 'range_damage+',
+  'toughness_on_CC': 'gain_toughness',
+  'vulnerability_debuff': 'vulner_debuff'
+};
+const TAG_RETIRED = ['combat_keystone','hybrid_keystone','peril_safety','start','support_keystone'];
+
 /* Design status of a node, shown only in the editor. '' means nothing to say. */
 const STATUSES = ['', 'wip', 'almost_done', 'finished'];
 const STATUS_LABEL = {'':'\u2014 none \u2014', wip:'Work in progress', almost_done:'Almost done', finished:'Finished'};
@@ -365,7 +406,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.13';
+const BUILD = '0.14';
 
 
 /* ------------------------------------------------------------------ *
@@ -734,7 +775,13 @@ function normalizeNode(n){
     filledGaps++;
   }
   if(!Array.isArray(n.tags)) n.tags = [];
-  n.tags = n.tags.map(t => String(t).trim()).filter((t, i, a) => t && a.indexOf(t) === i);
+  const before = n.tags.join('\u0000');
+  n.tags = n.tags
+    .map(t => String(t).trim())
+    .map(t => TAG_RENAMES[t] || t)
+    .filter(t => t && !TAG_RETIRED.includes(t))
+    .filter((t, i, a) => a.indexOf(t) === i);
+  if(n.tags.join('\u0000') !== before) filledGaps++;
   if(n.region === 'mid'){ n.region = 'hybrid'; filledGaps++; }   // v1 name for the right-hand band
   if(n.isFinished === true){ n.isFinished = 'finished'; filledGaps++; }   // boolean up to v0.10
   else if(n.isFinished === false){ n.isFinished = ''; filledGaps++; }
@@ -766,8 +813,8 @@ if(freshStart) save('tree', true);
 
 const owned = new Set([ROOT]);
 let reach = new Set([ROOT]);            // owned nodes actually joined to the root right now
-let filt = '';                          // highlight by tag
-let filtType = '';                      // highlight by type — the two are ANDed
+let filt = '', filt2 = '';              // filter by tag, and by a second tag
+let filtType = '';                      // filter by type — all three are ANDed
 
 /* Walks outwards from the root through owned nodes only. Anything owned that
    this walk does not visit is an orphan: it was part of the saved build, but
@@ -1192,14 +1239,33 @@ function refreshTagLists(){
   const tags = allTags();
   const dl = $('taglist');
   dl.textContent = '';
-  tags.forEach(t => dl.appendChild(new Option(t)));
+  [...new Set(TAG_REGISTRY.concat(tags))].forEach(t => dl.appendChild(new Option(t)));
 
-  const sel = $('filt'), keep = filt;
-  sel.textContent = '';
-  sel.appendChild(new Option('any tag',''));
-  tags.forEach(t => sel.appendChild(new Option(t, t)));
-  if(!tags.includes(keep)) filt = '';
-  sel.value = filt;
+  /* Both tag menus offer the registry, grouped, plus anything in use that the
+     registry does not know about. */
+  const loose = tags.filter(t => !TAG_REGISTRY.includes(t));
+  const fillTagSelect = (sel, current) => {
+    sel.textContent = '';
+    sel.appendChild(new Option('any tag',''));
+    TAG_GROUPS.forEach(([group, list]) => {
+      const og = document.createElement('optgroup');
+      og.label = group;
+      list.forEach(t => og.appendChild(new Option(t, t)));
+      sel.appendChild(og);
+    });
+    if(loose.length){
+      const og = document.createElement('optgroup');
+      og.label = 'Ungrouped';
+      loose.forEach(t => og.appendChild(new Option(t, t)));
+      sel.appendChild(og);
+    }
+    const known = TAG_REGISTRY.concat(loose);
+    const value = known.includes(current) ? current : '';
+    sel.value = value;
+    return value;
+  };
+  filt = fillTagSelect($('filt'), filt);
+  filt2 = fillTagSelect($('filt2'), filt2);
 
   const types = TYPES.filter(t => T.nodes.some(n => n.type === t));
   const ts = $('filt-type'), keepT = filtType;
@@ -1211,6 +1277,7 @@ function refreshTagLists(){
 }
 function matches(n){
   if(filt && !n.tags.includes(filt)) return false;
+  if(filt2 && !n.tags.includes(filt2)) return false;
   if(filtType && n.type !== filtType) return false;
   return true;
 }
@@ -1332,6 +1399,59 @@ function fillCounts(host, pairs, emptyNote){
   });
 }
 
+/* Which groups are currently unfolded, per pane. Kept in memory only: it is a
+   view preference, not part of anyone's data. */
+const folded = {comp:{}, ct:{}};
+
+/* Renders the tag tallies as one row per group, showing the group's total, and
+   the member tags underneath when the group is unfolded. Tags outside every
+   group are not shown at all. */
+function renderGroups(host, tally, opts){
+  host.textContent = '';
+  let anyGroup = false;
+  TAG_GROUPS.forEach(([group, list]) => {
+    const members = list.map(t => [t, tally.get(t) || 0]);
+    const total = members.reduce((sum, [, c]) => sum + c, 0);
+    if(!total && !opts.showEmptyGroups) return;
+    anyGroup = true;
+    const open = !!folded[opts.pane][group];
+
+    const row = document.createElement('div');
+    row.className = 'row grow' + (total ? '' : ' zero');
+    row.setAttribute('role', 'button');
+    row.tabIndex = 0;
+    row.setAttribute('aria-expanded', open ? 'true' : 'false');
+    const em = document.createElement('em');
+    const tw = document.createElement('span');
+    tw.className = 'tw'; tw.textContent = open ? '\u25be' : '\u25b8';
+    em.append(tw, document.createTextNode(group));
+    const cnt = document.createElement('span'); cnt.textContent = total;
+    row.append(em, cnt);
+    const toggle = () => { folded[opts.pane][group] = !open; paint(); };
+    row.addEventListener('click', toggle);
+    row.addEventListener('keydown', ev => {
+      if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); toggle(); }
+    });
+    host.appendChild(row);
+    if(!open) return;
+
+    members.forEach(([tag, c]) => {
+      if(!c && !opts.showEmptyTags) return;
+      const r = document.createElement('div');
+      r.className = 'row sub' + (c ? '' : ' zero');
+      const e = document.createElement('em'); e.textContent = tag;
+      const n = document.createElement('span'); n.textContent = c;
+      r.append(e, n);
+      host.appendChild(r);
+    });
+  });
+  if(!anyGroup && opts.empty){
+    const p = document.createElement('div');
+    p.className = 'empty-note'; p.textContent = opts.empty;
+    host.appendChild(p);
+  }
+}
+
 /* Tags carried by the nodes in the current build. A node with three tags feeds
    three counters; the root is left out, since it is not something you picked. */
 function buildComposition(){
@@ -1340,16 +1460,15 @@ function buildComposition(){
     if(id === ROOT || !byId[id]) return;
     byId[id].tags.forEach(t => tally.set(t, (tally.get(t) || 0) + 1));
   });
-  return [...tally.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  return tally;
 }
 
 /* Whole-tree tallies for the editor: every registered node type (zeros included)
    and every tag in use, counting tag instances rather than nodes. */
 function treeComposition(){
   const types = TYPES.map(t => [t, T.nodes.filter(n => n.type === t).length]);
-  const tally = new Map();
-  T.nodes.forEach(n => n.tags.forEach(t => tally.set(t, (tally.get(t) || 0) + 1)));
-  const tags = [...tally.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const tags = new Map();
+  T.nodes.forEach(n => n.tags.forEach(t => tags.set(t, (tags.get(t) || 0) + 1)));
   return {types, tags};
 }
 function paint(){
@@ -1367,14 +1486,15 @@ function paint(){
   owned.forEach(id => {
     if(id === ROOT) return;
     const n = byId[id];
-    if(n.tags.includes('incantation_slot_point') || n.type === 'support_keystone' ||
+    if(n.tags.includes('inc-n_slot_1point') || n.type === 'support_keystone' ||
       (n.region === 'support' && ['blitz','aura','ability','keystone'].includes(n.type))) pts++;
+    if(n.tags.includes('inc-n_slot_2points')) pts += 2;
   });
   setLock(2, pts >= 2); setLock(3, pts >= 4);
   /* The build is a browse-mode idea: in the editor the same colours would
      fight with the green "finished" marks, so it is simply not drawn there. */
   const editing = (mode === 'edit');
-  const filtering = !!(filt || filtType);
+  const filtering = !!(filt || filt2 || filtType);
   let shown = 0;
   T.nodes.forEach(n => {
     const g = nodeEls[n.id].g;
@@ -1395,11 +1515,13 @@ function paint(){
   if(orphans.length) note.textContent = orphans.length +
     (orphans.length === 1 ? ' node in this build is' : ' nodes in this build are') +
     ' cut off from the root under the current tree \u2014 shown in red.';
-  fillCounts($('comp'), buildComposition(), 'Nothing picked yet.');
+  renderGroups($('comp'), buildComposition(),
+    {pane:'comp', showEmptyGroups:false, showEmptyTags:false, empty:'Nothing picked yet.'});
   if(editing){
     const comp = treeComposition();
     fillCounts($('ct-types'), comp.types);
-    fillCounts($('ct-tags'), comp.tags, 'No tags on any node yet.');
+    renderGroups($('ct-tags'), comp.tags,
+      {pane:'ct', showEmptyGroups:true, showEmptyTags:true});
   }
   $('hl-count').textContent = filtering
     ? shown + (shown === 1 ? ' node matches.' : ' nodes match.')
@@ -1672,6 +1794,7 @@ $('reset').onclick = () => {
   toast('Build cleared: nodes, incantations and weapons.');
 };
 $('filt').onchange = e => { filt = e.target.value; paint(); };
+$('filt2').onchange = e => { filt2 = e.target.value; paint(); };
 $('filt-type').onchange = e => { filtType = e.target.value; paint(); };
 $('opt-handles').onchange = drawHandles;
 $('new-link').onclick = () => { if(selNode !== null){ setAwaitFirst(false); startNewLink(selNode); } };
