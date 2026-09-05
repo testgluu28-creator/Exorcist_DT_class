@@ -10,6 +10,7 @@
   --ink:#d6dae1; --muted:#8b93a0;
   --combat:#b4553a; --hybrid:#7d6bb0; --support:#c8a44d;
   --on:#e9edf3; --wire:#39414f; --wire-on:#c8a44d; --orphan:#c9503c;
+  --hl:#ffd34d; --done:#4fd06a;
 }
 *{box-sizing:border-box} html,body{margin:0;height:100%}
 body{background:var(--ground);color:var(--ink);font-family:Barlow,system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
@@ -65,7 +66,13 @@ body.tags-on .nd .tglbl{display:block}
 .nd.on .lbl{fill:var(--on)}
 .nd.orphan .bg{fill:#2b1614;stroke:var(--orphan);stroke-width:2.6}
 .nd.orphan .lbl{fill:#d98b7c}
-.nd.dim{opacity:.22}
+body.editing .nd.finished .bg{fill:#1c4526;stroke:var(--done);stroke-width:2.6}
+body.editing .nd.finished .lbl{fill:#8fe3a2}
+body.editing .nd.finished .glyph{fill:#c8f5d3}
+.nd.match .bg{fill:#453714;stroke:var(--hl);stroke-width:2.8}
+.nd.match .lbl,.nd.match .glyph{fill:var(--hl)}
+.nd.match .tglbl{fill:#c9a94a}
+.nd.dim{opacity:.13}
 .pane{background:#101319;border:1px solid var(--hair);border-radius:4px;padding:12px 14px 13px}
 .pane h3{margin:0 0 11px;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:600;
   display:flex;justify-content:space-between;align-items:center}
@@ -118,6 +125,8 @@ body.tags-on .nd .tglbl{display:block}
 .tabs button.on{border-color:var(--support);color:var(--support);background:#20242c}
 .ver{display:inline-block;margin-left:6px;padding:1px 7px;border:1px solid var(--hair);border-radius:10px;
   font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.08em;color:var(--muted)}
+#hl-panel{border-top:1px solid var(--hair);margin-top:22px;padding-top:4px}
+#hl-panel .pair{margin-top:2px}
 .orphnote{font-size:12.5px;line-height:1.5;color:var(--orphan);margin:-12px 0 16px}
 .hint{font-size:12.5px;line-height:1.55;color:var(--muted)}
 .fld{display:block;margin:0 0 10px}
@@ -175,8 +184,6 @@ body.linking .handle{pointer-events:none}
     <div class="row"><em><span class="swatch" style="background:var(--combat)"></span>Left &middot; combat</em><span id="r-combat">0</span></div>
     <div class="row"><em><span class="swatch" style="background:var(--support)"></span>Centre &middot; support</em><span id="r-support">0</span></div>
     <div class="row"><em><span class="swatch" style="background:var(--hybrid)"></span>Right &middot; hybrid/CC</em><span id="r-hybrid">0</span></div>
-    <h2>Highlight a tag</h2>
-    <div class="row"><em>Filter</em><span><select id="filt" style="background:var(--panel2);color:var(--ink);border:1px solid var(--hair);border-radius:3px;padding:3px"></select></span></div>
     <button id="reset">Clear build</button>
   </div>
 
@@ -194,6 +201,7 @@ body.linking .handle{pointer-events:none}
       <label class="fld"><span>Id (set by the page, never changes)</span><input id="f-id" readonly></label>
       <label class="fld"><span>Name</span><input id="f-name"></label>
       <label class="fld"><span>Description</span><textarea id="f-desc" rows="5"></textarea></label>
+      <label class="chk"><input type="checkbox" id="f-finished"> Finished — happy with where this sits</label>
       <div class="fld"><span>Tags</span>
         <div class="chips" id="f-tags"></div>
         <input id="f-tag-add" list="taglist" placeholder="Type a tag, press Enter">
@@ -235,6 +243,15 @@ body.linking .handle{pointer-events:none}
     <input type="file" id="imp" accept=".json,application/json" hidden>
     <button id="wipe" class="mini">Reset to the built-in tree</button>
   </div>
+
+  <div id="hl-panel">
+    <h2>Highlight</h2>
+    <div class="pair">
+      <label class="fld"><span>Tag</span><select id="filt"></select></label>
+      <label class="fld"><span>Type</span><select id="filt-type"></select></label>
+    </div>
+    <div class="hint" id="hl-count">Both narrow each other down.</div>
+  </div>
 </aside>
 <main>
   <div id="topbar">
@@ -266,7 +283,7 @@ const SH = {root:20,keystone:19,ability:17,blitz:16,aura:16,keymod:12,abilmod:12
 const SQUARE = ['keystone','ability','blitz','aura','root'];
 /* A single letter drawn inside the main node of each kind, so the important
    ones read at a glance. Their smaller *mod satellites stay blank. */
-const GLYPH = {root:'S', keystone:'K', ability:'A', blitz:'B', aura:'A', stat:'X'};
+const GLYPH = {root:'S', keystone:'K', ability:'CA', blitz:'B', aura:'A', stat:'X'};
 const TYPES = ['root','keystone','keymod','ability','abilmod','blitz','blitzmod','aura','stat','default'];
 const REGIONS = ['combat','support','hybrid'];
 const REGION_LABEL = {combat:'Combat', support:'Support', hybrid:'Hybrid/CC'};
@@ -312,7 +329,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.8';
+const BUILD = '0.10';
 
 
 /* ------------------------------------------------------------------ *
@@ -433,10 +450,11 @@ function defineSection(store, name, def){ STORES[store].sections[name] = def; }
 
 /* ---- tree store: the shape of the tree itself ---- */
 defineSection('tree', 'tree', {
-  version: 2,                 /* v2: node.tag (string) became node.tags (array),
+  version: 3,                 /* v2: node.tag (string) became node.tags (array),
                                      and the 'mid' region was renamed 'hybrid'.
-                                     Both are coerced in reindex(), so v1 payloads
-                                     and hand-written files load either way. */
+                                v3: nodes carry isFinished (boolean).
+                                     All three are coerced in reindex(), so older
+                                     payloads and hand-written files load either way. */
   read(){ return {nodes: T.nodes, edges: T.edges}; },
   write(payload /*, version */){
     const t = {nodes: clone(payload.nodes || []), edges: clone(payload.edges || [])};
@@ -630,19 +648,64 @@ let byId = {}, adj = {}, inc = {}, ROOT = 0;
 function nextId(nodes){
   return nodes.reduce((m, n) => (typeof n.id === 'number' && n.id > m ? n.id : m), -1) + 1;
 }
+/* ------------------------------------------------------------------ *
+ * Node shape
+ *
+ * Every attribute a node is expected to carry, with the value to use when a
+ * file predates it. An older export is never rejected for missing something:
+ * the gap is filled here on load, and the filled-in node is what gets saved
+ * and exported from then on, so a file only has to be opened once to come up
+ * to date.
+ *
+ * Adding an attribute later means adding one line to this table (and, for a
+ * value that is not a plain constant, a clause in normalizeNode below).
+ * ------------------------------------------------------------------ */
+const NODE_DEFAULTS = {
+  x: 0,
+  y: 0,
+  type: 'default',
+  region: 'combat',
+  name: 'Unnamed',
+  tags: () => [],
+  desc: '',
+  isFinished: false
+};
+
+let filledGaps = 0;          /* attributes supplied since the last countGaps() call.
+                                reindex() only ever adds to it — whoever is about to
+                                load something zeroes it first and reads it after. */
+function countGaps(){ filledGaps = 0; }
+
+function normalizeNode(n){
+  for(const key in NODE_DEFAULTS){
+    if(n[key] === undefined || n[key] === null){
+      const d = NODE_DEFAULTS[key];
+      n[key] = (typeof d === 'function') ? d() : d;
+      filledGaps++;
+    }
+  }
+  n.x = +n.x || 0; n.y = +n.y || 0;
+  n.name = String(n.name) || 'Unnamed';
+  n.desc = String(n.desc);
+  if(n.tag !== undefined){                       // v1 files carried a single `tag`
+    if(!Array.isArray(n.tags) || !n.tags.length) n.tags = n.tag ? [String(n.tag)] : [];
+    delete n.tag;
+  }
+  if(!Array.isArray(n.tags)) n.tags = [];
+  n.tags = n.tags.map(t => String(t).trim()).filter((t, i, a) => t && a.indexOf(t) === i);
+  if(n.region === 'mid') n.region = 'hybrid';    // v1 name for the right-hand band
+  n.isFinished = !!n.isFinished;
+  if(TYPES.indexOf(n.type) < 0) n.type = 'default';
+  if(REGIONS.indexOf(n.region) < 0) n.region = 'combat';
+  return n;
+}
+
 function reindex(){
   byId = {}; adj = {}; inc = {};
   let next = nextId(T.nodes);
   T.nodes.forEach(n => {
     if(typeof n.id !== 'number' || byId[n.id] !== undefined) n.id = next++;
-    n.x = +n.x || 0; n.y = +n.y || 0;
-    n.name = n.name || 'Unnamed'; n.desc = n.desc || '';
-    if(!Array.isArray(n.tags)) n.tags = n.tag ? [String(n.tag)] : [];   // v1 files carried a single `tag`
-    n.tags = n.tags.map(t => String(t).trim()).filter((t, i, a) => t && a.indexOf(t) === i);
-    delete n.tag;
-    if(n.region === 'mid') n.region = 'hybrid';                          // v1 name for the right-hand band
-    if(TYPES.indexOf(n.type) < 0) n.type = 'default';
-    if(REGIONS.indexOf(n.region) < 0) n.region = 'combat';
+    normalizeNode(n);
     byId[n.id] = n; adj[n.id] = []; inc[n.id] = [];
   });
   T.edges = T.edges
@@ -652,12 +715,15 @@ function reindex(){
   const r = T.nodes.find(n => n.type === 'root');
   ROOT = r ? r.id : T.nodes[0].id;
 }
+countGaps();
 reindex();
+const bootGaps = filledGaps;
 if(freshStart) save('tree', true);
 
 const owned = new Set([ROOT]);
 let reach = new Set([ROOT]);            // owned nodes actually joined to the root right now
-let filt = '';
+let filt = '';                          // highlight by tag
+let filtType = '';                      // highlight by type — the two are ANDed
 
 /* Walks outwards from the root through owned nodes only. Anything owned that
    this walk does not visit is an orphan: it was part of the saved build, but
@@ -819,7 +885,8 @@ function positionNode(id){
   o.idl.setAttribute('x', x); o.idl.setAttribute('y', n.y - r - 5);
   if(o.gl){
     o.gl.setAttribute('x', x); o.gl.setAttribute('y', n.y);
-    o.gl.setAttribute('font-size', Math.max(10, Math.round(r * 1.05)));
+    const chars = (GLYPH[n.type] || '').length;
+    o.gl.setAttribute('font-size', Math.max(9, Math.round(r * (chars > 1 ? 0.78 : 1.05))));
   }
 }
 
@@ -1027,6 +1094,7 @@ function inspector(){
   if(hasN){
     const n = byId[selNode];
     $('f-id').value = '#' + n.id;
+    $('f-finished').checked = !!n.isFinished;
     $('f-name').value = n.name; $('f-desc').value = n.desc;
     $('f-tag-add').value = '';
     drawChips();
@@ -1081,12 +1149,26 @@ function refreshTagLists(){
   const dl = $('taglist');
   dl.textContent = '';
   tags.forEach(t => dl.appendChild(new Option(t)));
+
   const sel = $('filt'), keep = filt;
   sel.textContent = '';
-  sel.appendChild(new Option('none',''));
+  sel.appendChild(new Option('any tag',''));
   tags.forEach(t => sel.appendChild(new Option(t, t)));
   if(!tags.includes(keep)) filt = '';
   sel.value = filt;
+
+  const types = TYPES.filter(t => T.nodes.some(n => n.type === t));
+  const ts = $('filt-type'), keepT = filtType;
+  ts.textContent = '';
+  ts.appendChild(new Option('any type',''));
+  types.forEach(t => ts.appendChild(new Option(t, t)));
+  if(!types.includes(keepT)) filtType = '';
+  ts.value = filtType;
+}
+function matches(n){
+  if(filt && !n.tags.includes(filt)) return false;
+  if(filtType && n.type !== filtType) return false;
+  return true;
 }
 
 function fieldEdit(input, apply, structural){
@@ -1201,20 +1283,33 @@ function paint(){
       (n.region === 'support' && ['blitz','aura','ability','keystone'].includes(n.type))) pts++;
   });
   setLock(2, pts >= 2); setLock(3, pts >= 4);
+  /* The build is a browse-mode idea: in the editor the same colours would
+     fight with the green "finished" marks, so it is simply not drawn there. */
+  const editing = (mode === 'edit');
+  const filtering = !!(filt || filtType);
+  let shown = 0;
   T.nodes.forEach(n => {
     const g = nodeEls[n.id].g;
-    const stray = owned.has(n.id) && !reach.has(n.id);
-    g.classList.toggle('on', owned.has(n.id) && !stray);
+    const stray = !editing && owned.has(n.id) && !reach.has(n.id);
+    const hit = matches(n);
+    if(hit) shown++;
+    g.classList.toggle('on', !editing && owned.has(n.id) && !stray);
     g.classList.toggle('orphan', stray);
-    g.classList.toggle('avail', !owned.has(n.id) && avail(n.id));
-    g.classList.toggle('dim', !!filt && !n.tags.includes(filt));
+    g.classList.toggle('avail', !editing && !owned.has(n.id) && avail(n.id));
+    g.classList.toggle('finished', editing && !!n.isFinished);
+    g.classList.toggle('match', filtering && hit);
+    g.classList.toggle('dim', filtering && !hit);
   });
-  T.edges.forEach(([a,b], i) => edgeEls[i].line.classList.toggle('live', reach.has(a) && reach.has(b)));
+  T.edges.forEach(([a,b], i) =>
+    edgeEls[i].line.classList.toggle('live', !editing && reach.has(a) && reach.has(b)));
   const note = $('orph');
-  note.hidden = !orphans.length;
+  note.hidden = editing || !orphans.length;
   if(orphans.length) note.textContent = orphans.length +
     (orphans.length === 1 ? ' node in this build is' : ' nodes in this build are') +
     ' cut off from the root under the current tree \u2014 shown in red.';
+  $('hl-count').textContent = filtering
+    ? shown + (shown === 1 ? ' node matches.' : ' nodes match.')
+    : 'Both narrow each other down.';
 }
 
 
@@ -1449,6 +1544,7 @@ function setMode(m){
   closePick();
   $('inc').hidden = (m !== 'build');
   $('topbar').hidden = (m !== 'build');
+  paint();
   if(m === 'build') restoreBuild();          // the tree may have changed while editing
   $('tip').style.opacity = 0;
   setAwaitFirst(false); cancelPending(); clearSelection();
@@ -1469,6 +1565,7 @@ $('tab-build').onclick = () => setMode('build');
 $('tab-edit').onclick = () => setMode('edit');
 $('reset').onclick = () => { owned.clear(); owned.add(ROOT); paint(); rememberBuild(); };
 $('filt').onchange = e => { filt = e.target.value; paint(); };
+$('filt-type').onchange = e => { filtType = e.target.value; paint(); };
 $('opt-handles').onchange = drawHandles;
 $('new-link').onclick = () => { if(selNode !== null){ setAwaitFirst(false); startNewLink(selNode); } };
 const beginLink = () => {
@@ -1486,6 +1583,12 @@ $('f-tag-add').addEventListener('keydown', ev => {
   ev.target.value = '';
 });
 $('f-tag-add').addEventListener('blur', ev => { addTags(ev.target.value); ev.target.value = ''; });
+$('f-finished').onchange = ev => {
+  if(selNode === null) return;
+  pushUndo();
+  byId[selNode].isFinished = ev.target.checked;
+  paint(); save('tree');
+};
 $('opt-tags').onchange = ev => document.body.classList.toggle('tags-on', ev.target.checked);
 $('opt-ids').onchange = ev => document.body.classList.toggle('ids-on', ev.target.checked);
 document.body.classList.toggle('ids-on', $('opt-ids').checked);
@@ -1522,11 +1625,14 @@ $('imp').onchange = ev => {
     try{
       const doc = readDoc('tree', JSON.parse(r.result));
       pushUndo();
+      countGaps();
       wipeStore('tree');
       applyDoc('tree', doc);
       render(); restoreBuild(); clearSelection(); save('tree', true);
+      const gaps = filledGaps;
       const extra = Object.keys(STORES.tree.foreign).length;
       toast('Loaded ' + f.name + ', replacing the copy in this browser.' +
+        (gaps ? ' It predates ' + gaps + ' attribute value(s), which have been filled in with defaults.' : '') +
         (extra ? ' It also carries ' + extra + ' section(s) this page build does not read yet — those are being kept.' : ''));
     }catch(err){ toast('That file is not a saved talent page: ' + err.message + '.'); }
     ev.target.value = '';
@@ -1586,5 +1692,6 @@ try{
   toast('The copy stored in this browser could not be read, so the built-in tree is back.');
 }
 restoreBuild();
+if(!freshStart && bootGaps) save('tree', true);     // bring a stale stored copy up to date at once
 if(freshStart) toast('Your own copy of this tree now lives in this browser.');
 </script></body></html>
