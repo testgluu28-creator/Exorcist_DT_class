@@ -28,16 +28,22 @@ h2{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;lett
   color:var(--muted);margin:22px 0 9px;text-transform:uppercase}
 .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px solid #232833}
 .row em{font-style:normal;color:var(--muted)}
-#comp .row em{color:var(--ink)}
-#comp .row.grow{padding:6px 0 5px}
-#comp .row.sub{padding:1px 0;border-bottom:none;line-height:1.3}
-.row.grow{cursor:pointer;user-select:none}
-.row.grow:hover em,.row.grow:focus-visible em{color:var(--support)}
-.row .tw{display:inline-block;width:12px;color:var(--muted);font-size:10px}
-.row.sub{padding-left:14px;border-bottom-color:#1a1e25}
-.row.sub em{color:var(--muted);font-size:12.5px}
-.row.zero em,.row.zero span{color:#5b6577}
-#comp .row span{color:var(--support);font-variant-numeric:tabular-nums}
+/* Foldable counters have their own row, deliberately not .row: the sidebar's
+   generic row is roomy on purpose, and member lines need to read as a tight
+   block under their group. Same rules serve both composition panes. */
+.crow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.crow em{font-style:normal}
+.crow > span{color:var(--support);font-variant-numeric:tabular-nums}
+.crow.grow{font-size:14px;padding:5px 0 4px;border-bottom:1px solid #232833;
+  cursor:pointer;user-select:none}
+.crow.grow em{color:var(--ink)}
+.crow.grow:hover em,.crow.grow:focus-visible em{color:var(--support)}
+.crow .tw{display:inline-block;width:12px;color:var(--muted);font-size:10px}
+.crow.sub{font-size:12.5px;line-height:1.5;padding:0;border:0}
+.crow.sub em{color:var(--muted);padding-left:14px}
+.crow.sub:first-of-type{margin-top:2px}
+.crow.sub + .crow.grow{margin-top:5px}
+.crow.zero em,.crow.zero > span{color:#5b6577}
 .empty-note{font-size:12.5px;color:var(--muted);padding:4px 0 2px}
 .swatch{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;vertical-align:middle}
 button{width:100%;margin-top:20px;padding:10px;background:transparent;border:1px solid var(--hair);
@@ -105,6 +111,8 @@ body.editing .nd.st-almost_done .glyph{fill:#c4e2fb}
 #comp-tree .row{font-size:13px;padding:3px 0;border-bottom:1px solid #1c212a}
 #comp-tree .row span{color:var(--support);font-variant-numeric:tabular-nums}
 #comp-tree .row.zero em,#comp-tree .row.zero span{color:#5b6577}
+#comp-tree .crow.grow{font-size:13px;padding:4px 0 3px;border-bottom-color:#1c212a}
+#comp-tree .crow.sub{font-size:12px}
 #inc .fold{font-family:Barlow,sans-serif;font-size:15px;color:var(--muted);cursor:pointer;padding:0 4px;line-height:1}
 #inc .fold:hover,#inc .fold:focus-visible{color:var(--support)}
 #inc.folded #inc-slots{display:none}
@@ -420,7 +428,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.15';
+const BUILD = '0.16';
 
 
 /* ------------------------------------------------------------------ *
@@ -1424,7 +1432,7 @@ function renderGroups(host, tally, opts){
     const open = !!folded[opts.pane][group];
 
     const row = document.createElement('div');
-    row.className = 'row grow' + (total ? '' : ' zero');
+    row.className = 'crow grow' + (total ? '' : ' zero');
     row.setAttribute('role', 'button');
     row.tabIndex = 0;
     row.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -1445,7 +1453,7 @@ function renderGroups(host, tally, opts){
     members.forEach(([tag, c]) => {
       if(!c && !opts.showEmptyTags) return;
       const r = document.createElement('div');
-      r.className = 'row sub' + (c ? '' : ' zero');
+      r.className = 'crow sub' + (c ? '' : ' zero');
       const e = document.createElement('em'); e.textContent = tag;
       const n = document.createElement('span'); n.textContent = c;
       r.append(e, n);
