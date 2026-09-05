@@ -28,6 +28,9 @@ h2{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;lett
   color:var(--muted);margin:22px 0 9px;text-transform:uppercase}
 .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px solid #232833}
 .row em{font-style:normal;color:var(--muted)}
+#comp .row em{color:var(--ink)}
+#comp .row span{color:var(--support);font-variant-numeric:tabular-nums}
+.empty-note{font-size:12.5px;color:var(--muted);padding:4px 0 2px}
 .swatch{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;vertical-align:middle}
 button{width:100%;margin-top:20px;padding:10px;background:transparent;border:1px solid var(--hair);
   color:var(--muted);border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:13px;
@@ -75,7 +78,10 @@ body.editing .nd.st-wip .glyph{fill:#faeeb4}
 body.editing .nd.st-almost_done .bg{fill:#14314f;stroke:var(--almost);stroke-width:2.6}
 body.editing .nd.st-almost_done .lbl{fill:#93c7f5}
 body.editing .nd.st-almost_done .glyph{fill:#c4e2fb}
-.nd.match .bg{fill:#453714;stroke:var(--hl);stroke-width:2.8}
+.nd.match .bg{fill:#453714;stroke:var(--hl);stroke-width:2.8;
+  filter:drop-shadow(0 0 5px var(--hl)) drop-shadow(0 0 11px rgba(255,211,77,.55));
+  animation:halo 1.6s ease-in-out infinite}
+@keyframes halo{50%{filter:drop-shadow(0 0 8px var(--hl)) drop-shadow(0 0 17px rgba(255,211,77,.75))}}
 .nd.match .lbl,.nd.match .glyph{fill:var(--hl)}
 .nd.match .tglbl{fill:#c9a94a}
 .nd.dim{opacity:.13}
@@ -83,6 +89,14 @@ body.editing .nd.st-almost_done .glyph{fill:#c4e2fb}
 .pane h3{margin:0 0 11px;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:600;
   display:flex;justify-content:space-between;align-items:center}
 #inc{position:absolute;top:16px;left:16px;width:238px;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:6}
+#comp-tree{position:absolute;top:16px;left:16px;width:226px;max-height:calc(100% - 32px);overflow-y:auto;
+  box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:6}
+#comp-tree h4{margin:12px 0 5px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#comp-tree h4:first-of-type{margin-top:2px}
+#comp-tree .row{font-size:13px;padding:3px 0;border-bottom:1px solid #1c212a}
+#comp-tree .row span{color:var(--support);font-variant-numeric:tabular-nums}
+#comp-tree .row.zero em,#comp-tree .row.zero span{color:#5b6577}
 #inc .fold{font-family:Barlow,sans-serif;font-size:15px;color:var(--muted);cursor:pointer;padding:0 4px;line-height:1}
 #inc .fold:hover,#inc .fold:focus-visible{color:var(--support)}
 #inc.folded #inc-slots{display:none}
@@ -175,7 +189,7 @@ body.linking .handle{pointer-events:none}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0f1216;
   border:1px solid var(--hair);border-left:3px solid var(--support);padding:9px 14px;border-radius:3px;
   font-size:13px;opacity:0;transition:opacity .15s;pointer-events:none;z-index:20}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style></head><body>
 <aside>
   <h1>Exorcist</h1>
@@ -190,6 +204,8 @@ body.linking .handle{pointer-events:none}
     <div class="row"><em><span class="swatch" style="background:var(--combat)"></span>Left &middot; combat</em><span id="r-combat">0</span></div>
     <div class="row"><em><span class="swatch" style="background:var(--support)"></span>Centre &middot; support</em><span id="r-support">0</span></div>
     <div class="row"><em><span class="swatch" style="background:var(--hybrid)"></span>Right &middot; hybrid/CC</em><span id="r-hybrid">0</span></div>
+    <h2>Build's composition</h2>
+    <div id="comp"></div>
     <h2>Your build</h2>
     <div class="hint" style="margin-bottom:8px">Picks, incantations and weapons — everything this browser
       keeps for the build. The tree's own shape is exported separately, from the Edit tab.</div>
@@ -257,7 +273,7 @@ body.linking .handle{pointer-events:none}
   </div>
 
   <div id="hl-panel">
-    <h2>Highlight</h2>
+    <h2>Filter</h2>
     <div class="pair">
       <label class="fld"><span>Tag</span><select id="filt"></select></label>
       <label class="fld"><span>Type</span><select id="filt-type"></select></label>
@@ -272,6 +288,11 @@ body.linking .handle{pointer-events:none}
   </div>
   <div id="stage">
   <div id="scroll"><div id="host"></div></div>
+  <section id="comp-tree" class="pane" aria-label="Tree composition" hidden>
+    <h3>Tree Composition</h3>
+    <h4>By node type</h4><div id="ct-types"></div>
+    <h4>By type of effect</h4><div id="ct-tags"></div>
+  </section>
   <section id="inc" class="pane" aria-label="Incantations">
     <h3 id="inc-head">Incantations<span class="fold" id="inc-fold" role="button" tabindex="0"
       aria-label="Collapse the Incantations pane">−</span></h3>
@@ -344,7 +365,7 @@ const $ = id => document.getElementById(id);
  * ------------------------------------------------------------------ */
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.12';
+const BUILD = '0.13';
 
 
 /* ------------------------------------------------------------------ *
@@ -1287,6 +1308,50 @@ function place(e){
   tip.style.left = x + 'px'; tip.style.top = y + 'px';
 }
 function allTags(){ return [...new Set(T.nodes.flatMap(n => n.tags))].sort(); }
+
+/* Draws a list of "label ...... count" rows into `host`, rebuilding it from
+   scratch. Both composition panels grow downwards as rows are added; their
+   containers just get taller and push whatever follows further down. */
+function fillCounts(host, pairs, emptyNote){
+  host.textContent = '';
+  if(!pairs.length){
+    if(emptyNote){
+      const p = document.createElement('div');
+      p.className = 'empty-note'; p.textContent = emptyNote;
+      host.appendChild(p);
+    }
+    return;
+  }
+  pairs.forEach(([label, count]) => {
+    const row = document.createElement('div');
+    row.className = 'row' + (count ? '' : ' zero');
+    const em = document.createElement('em'); em.textContent = label;
+    const n = document.createElement('span'); n.textContent = count;
+    row.append(em, n);
+    host.appendChild(row);
+  });
+}
+
+/* Tags carried by the nodes in the current build. A node with three tags feeds
+   three counters; the root is left out, since it is not something you picked. */
+function buildComposition(){
+  const tally = new Map();
+  owned.forEach(id => {
+    if(id === ROOT || !byId[id]) return;
+    byId[id].tags.forEach(t => tally.set(t, (tally.get(t) || 0) + 1));
+  });
+  return [...tally.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+/* Whole-tree tallies for the editor: every registered node type (zeros included)
+   and every tag in use, counting tag instances rather than nodes. */
+function treeComposition(){
+  const types = TYPES.map(t => [t, T.nodes.filter(n => n.type === t).length]);
+  const tally = new Map();
+  T.nodes.forEach(n => n.tags.forEach(t => tally.set(t, (tally.get(t) || 0) + 1)));
+  const tags = [...tally.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  return {types, tags};
+}
 function paint(){
   [...owned].forEach(id => { if(!byId[id]) owned.delete(id); });
   owned.add(ROOT);
@@ -1330,6 +1395,12 @@ function paint(){
   if(orphans.length) note.textContent = orphans.length +
     (orphans.length === 1 ? ' node in this build is' : ' nodes in this build are') +
     ' cut off from the root under the current tree \u2014 shown in red.';
+  fillCounts($('comp'), buildComposition(), 'Nothing picked yet.');
+  if(editing){
+    const comp = treeComposition();
+    fillCounts($('ct-types'), comp.types);
+    fillCounts($('ct-tags'), comp.tags, 'No tags on any node yet.');
+  }
   $('hl-count').textContent = filtering
     ? shown + (shown === 1 ? ' node matches.' : ' nodes match.')
     : 'Both narrow each other down.';
@@ -1567,6 +1638,7 @@ function setMode(m){
   closePick();
   $('inc').hidden = (m !== 'build');
   $('topbar').hidden = (m !== 'build');
+  $('comp-tree').hidden = (m !== 'edit');
   paint();
   if(m === 'build') restoreBuild();          // the tree may have changed while editing
   $('tip').style.opacity = 0;
