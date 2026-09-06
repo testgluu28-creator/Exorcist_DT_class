@@ -122,6 +122,8 @@ body.panning #scroll,body.panning .nd,body.panning svg *{cursor:grabbing}
 #comp-tree .row{font-size:13px;padding:3px 0;border-bottom:1px solid #1c212a}
 #comp-tree .row span{color:var(--support);font-variant-numeric:tabular-nums}
 #comp-tree .row.zero em,#comp-tree .row.zero span{color:#5b6577}
+#comp-tree .row.total{border-top:1px solid var(--hair);border-bottom:0;margin-top:3px;padding-top:5px}
+#comp-tree .row.total em{color:var(--ink)}
 #comp-tree .crow.grow{font-size:13px;padding:4px 0 3px;border-bottom-color:#1c212a}
 #comp-tree .crow.sub{font-size:12px;line-height:15px}
 #comp-tree .crow.sub em,#comp-tree .crow.sub > span{line-height:15px}
@@ -249,8 +251,10 @@ body.linking .handle{pointer-events:none}
   <div id="edit-panel" hidden>
     <div class="hint" id="insp-empty">
       Drag a node to move it. Click a node to rename it.<br><br>
+      <b>Click a node</b> to start a link from it, then click the node it should reach.
+      <b>Press and hold</b> a node to select it for editing, or to drag it somewhere else.<br><br>
       Every link shows a dot where it meets a node. Click a dot to pull that end loose, then click the node it should go to.<br><br>
-      Double-click empty canvas to drop a new node there.
+      Double-click empty canvas to drop a new node there. <b>Delete</b> removes whatever the cursor is over.
     </div>
     <button id="add-node" class="mini">Add a node</button>
     <button id="add-link" class="mini">Create a link</button>
@@ -373,6 +377,7 @@ const DEFAULT_TREE = D.defaultTree;
 const W = D.layout.canvasWidth, H = D.layout.canvasHeight, PAD = D.layout.sidePadding;
 const ZOOM_MIN = D.layout.zoomMin || 0.5, ZOOM_MAX = D.layout.zoomMax || 3;
 const MAXPTS = D.rules.maxPoints;
+const HOLD_MS = D.rules.clickHoldMs || 250;   // press longer than this and it is a hold, not a click
 const SLOT_POINT_TAGS = D.rules.slotPointTags || {};
 
 const TYPES = D.nodeTypes.map(t => t.id);
@@ -436,7 +441,7 @@ function weaponValid(id, slot){
 
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.21';
+const BUILD = '0.23';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -803,7 +808,7 @@ function rememberBuild(){
 /* ---------------- edit state ---------------- */
 let mode = 'build';                 // 'build' | 'edit'
 let selNode = null, selEdge = null; // ids / edge index
-let hoverNode = null;
+let hoverNode = null, hoverEdge = null;
 let pending = null;                 // {edge, end, anchor, before} — a link end following the cursor
 let drag = null;
 let awaitFirst = false;             // waiting for the first node of a brand new link
@@ -828,6 +833,7 @@ const cx = n => n.x + PAD;
 
 function render(){
   reindex();
+  hoverNode = hoverEdge = null;          // the elements they pointed at are about to go
   for(const k in nodeEls) delete nodeEls[k];
   edgeEls.length = 0;
   const host = $('host'); host.textContent = '';
@@ -853,6 +859,14 @@ function render(){
     hit.addEventListener('pointerdown', ev => {
       if(mode !== 'edit' || pending) return;
       ev.stopPropagation(); selectEdge(i);
+    });
+    hit.addEventListener('mouseenter', () => {
+      if(mode !== 'edit') return;
+      hoverEdge = i; drawHandles();
+    });
+    hit.addEventListener('mouseleave', () => {
+      if(hoverEdge !== i) return;
+      hoverEdge = null; drawHandles();
     });
     positionEdge(i);
   });
@@ -955,6 +969,7 @@ function visibleEdges(){
   if($('opt-handles').checked) return T.edges.map((_, i) => i);
   const set = new Set();
   if(hoverNode !== null) inc[hoverNode].forEach(i => set.add(i));
+  if(hoverEdge !== null) set.add(hoverEdge);
   if(selNode !== null) inc[selNode].forEach(i => set.add(i));
   if(selEdge !== null) set.add(selEdge);
   if(pending && pending.edge !== null) set.add(pending.edge);
@@ -1062,7 +1077,8 @@ function wireNode(id, g){
     if(awaitFirst){ setAwaitFirst(false); startNewLink(id); return; }
     if(pending){ attachTo(id); return; }
     const n = byId[id], p = toSvg(ev);
-    drag = {id, dx: cx(n) - p.x, dy: n.y - p.y, x0: ev.clientX, y0: ev.clientY, moved:false, snap: clone(T)};
+    drag = {id, dx: cx(n) - p.x, dy: n.y - p.y, x0: ev.clientX, y0: ev.clientY,
+            t0: Date.now(), moved:false, snap: clone(T)};
     g.classList.add('drag');
     g.setPointerCapture(ev.pointerId);
     document.body.classList.add('dragging');
@@ -1082,9 +1098,14 @@ function wireNode(id, g){
     if(!drag || drag.id !== id) return;
     g.classList.remove('drag');
     document.body.classList.remove('dragging');
-    if(drag.moved){ pushUndo(drag.snap); save('tree'); }
-    else selectNode(id);
+    const quick = Date.now() - drag.t0 < HOLD_MS;
+    const snap = drag.snap, moved = drag.moved;
     drag = null;
+    if(moved){ pushUndo(snap); save('tree'); return; }
+    /* Nothing moved, so it was a press rather than a drag: a quick one starts a
+       link from here, holding still for a moment selects the node instead. */
+    if(quick) startNewLink(id);
+    else selectNode(id);
   };
   g.addEventListener('pointerup', end);
   g.addEventListener('pointercancel', end);
@@ -1124,6 +1145,7 @@ function grabEnd(i, end, ev){
   toast('Now click the node this end should attach to. Esc puts it back.');
 }
 function startNewLink(fromId){
+  cancelPending();
   pending = {edge:null, end:1, anchor:fromId, pt:{x:cx(byId[fromId]), y:byId[fromId].y}, before:clone(T)};
   document.body.classList.add('linking');
   markPickTargets(); drawHandles();
@@ -1150,7 +1172,7 @@ function markPickTargets(){
 }
 function attachTo(id){
   if(!pending) return;
-  if(id === pending.anchor){ toast('A link needs two different nodes.'); return; }
+  if(id === pending.anchor){ cancelPending(); toast('Link cancelled.'); return; }
   const other = pending.anchor;
   const dupe = T.edges.some((e, i) => i !== pending.edge &&
     ((e[0] === id && e[1] === other) || (e[1] === id && e[0] === other)));
@@ -1334,7 +1356,7 @@ function addNodeAtCentre(){
 function deleteNode(id){
   if(id === ROOT){ toast('The root node has to stay.'); return; }
   const n = byId[id];
-  if(!confirm('Delete "' + n.name + '" and its ' + inc[id].length + ' link(s)?')) return;
+  if(inc[id].length && !confirm('Delete "' + n.name + '" and its ' + inc[id].length + ' link(s)?')) return;
   pushUndo();
   T.nodes = T.nodes.filter(m => m.id !== id);
   T.edges = T.edges.filter(e => e[0] !== id && e[1] !== id);
@@ -1392,7 +1414,7 @@ function fillCounts(host, pairs, emptyNote){
   }
   pairs.forEach(([label, count]) => {
     const row = document.createElement('div');
-    row.className = 'row' + (count ? '' : ' zero');
+    row.className = 'row' + (count ? '' : ' zero') + (label === 'Total' ? ' total' : '');
     const em = document.createElement('em'); em.textContent = label;
     const n = document.createElement('span'); n.textContent = count;
     row.append(em, n);
@@ -1467,7 +1489,10 @@ function buildComposition(){
 /* Whole-tree tallies for the editor: every registered node type (zeros included)
    and every tag in use, counting tag instances rather than nodes. */
 function treeComposition(){
-  const types = TYPES.map(t => [t, T.nodes.filter(n => n.type === t).length]);
+  /* The root is always exactly one, so counting it says nothing; a total of
+     everything else is the number actually worth watching. */
+  const types = TYPES.filter(t => t !== 'root').map(t => [t, T.nodes.filter(n => n.type === t).length]);
+  types.push(['Total', T.nodes.filter(n => n.type !== 'root').length]);
   const tags = new Map();
   T.nodes.forEach(n => n.tags.forEach(t => tags.set(t, (tags.get(t) || 0) + 1)));
   return {types, tags};
@@ -1858,13 +1883,16 @@ $('opt-tags').onchange = ev => document.body.classList.toggle('tags-on', ev.targ
 $('opt-ids').onchange = ev => document.body.classList.toggle('ids-on', ev.target.checked);
 document.body.classList.toggle('ids-on', $('opt-ids').checked);
 $('add-link-2').onclick = beginLink;
-$('del-link').onclick = () => {
-  if(selEdge === null) return;
+function deleteEdge(i){
+  if(i === null || !T.edges[i]) return;
   pushUndo();
-  T.edges.splice(selEdge, 1);
-  selEdge = null;
-  render(); save('tree'); toast('Link deleted.');
-};
+  T.edges.splice(i, 1);
+  if(selEdge === i) selEdge = null;
+  else if(selEdge !== null && selEdge > i) selEdge--;
+  cancelPending();
+  render(); inspector(); save('tree'); toast('Link deleted.');
+}
+$('del-link').onclick = () => deleteEdge(selEdge);
 $('undo').onclick = () => {
   if(!undoStack.length){ toast('Nothing left to undo.'); return; }
   const step = undoStack.pop();
@@ -1963,7 +1991,14 @@ window.addEventListener('keydown', ev => {
   if(ev.key === '-' || ev.key === '_'){ ev.preventDefault(); setZoom(zoom / 1.2); return; }
   if(ev.key === '0'){ ev.preventDefault(); setZoom(1); return; }
   if(mode !== 'edit') return;
-  if((ev.key === 'Delete' || ev.key === 'Backspace') && selEdge !== null){ ev.preventDefault(); $('del-link').click(); return; }
+  if(ev.key === 'Delete' || ev.key === 'Backspace'){
+    /* Whatever the cursor is over wins; the selection is the fallback. */
+    if(hoverEdge !== null && T.edges[hoverEdge]){ ev.preventDefault(); deleteEdge(hoverEdge); return; }
+    if(hoverNode !== null && byId[hoverNode]){ ev.preventDefault(); deleteNode(hoverNode); return; }
+    if(selEdge !== null){ ev.preventDefault(); deleteEdge(selEdge); return; }
+    if(selNode !== null){ ev.preventDefault(); deleteNode(selNode); return; }
+    return;
+  }
   if(selNode !== null && ev.key.startsWith('Arrow')){
     ev.preventDefault();
     const step = ev.shiftKey ? 10 : 1, n = byId[selNode];
