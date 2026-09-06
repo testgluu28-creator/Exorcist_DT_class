@@ -251,8 +251,8 @@ body.linking .handle{pointer-events:none}
   <div id="edit-panel" hidden>
     <div class="hint" id="insp-empty">
       Drag a node to move it. Click a node to rename it.<br><br>
-      <b>Click a node</b> to start a link from it, then click the node it should reach.
-      <b>Press and hold</b> a node to select it for editing, or to drag it somewhere else.<br><br>
+      <b>Click a node</b> to select it for editing, or drag it to move it.
+      <b>Ctrl+click</b> a node to start a link from it, then click the node it should reach.<br><br>
       Every link shows a dot where it meets a node. Click a dot to pull that end loose, then click the node it should go to.<br><br>
       Double-click empty canvas to drop a new node there. <b>Delete</b> removes whatever the cursor is over.
     </div>
@@ -377,7 +377,6 @@ const DEFAULT_TREE = D.defaultTree;
 const W = D.layout.canvasWidth, H = D.layout.canvasHeight, PAD = D.layout.sidePadding;
 const ZOOM_MIN = D.layout.zoomMin || 0.5, ZOOM_MAX = D.layout.zoomMax || 3;
 const MAXPTS = D.rules.maxPoints;
-const HOLD_MS = D.rules.clickHoldMs || 250;   // press longer than this and it is a hold, not a click
 const SLOT_POINT_TAGS = D.rules.slotPointTags || {};
 
 const TYPES = D.nodeTypes.map(t => t.id);
@@ -441,7 +440,7 @@ function weaponValid(id, slot){
 
 /* Bump this by hand on every code change — it is only here so you can tell
    at a glance which build a browser tab is actually running. */
-const BUILD = '0.23';
+const BUILD = '0.24';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -1078,7 +1077,7 @@ function wireNode(id, g){
     if(pending){ attachTo(id); return; }
     const n = byId[id], p = toSvg(ev);
     drag = {id, dx: cx(n) - p.x, dy: n.y - p.y, x0: ev.clientX, y0: ev.clientY,
-            t0: Date.now(), moved:false, snap: clone(T)};
+            link: ev.ctrlKey || ev.metaKey, moved:false, snap: clone(T)};
     g.classList.add('drag');
     g.setPointerCapture(ev.pointerId);
     document.body.classList.add('dragging');
@@ -1098,13 +1097,12 @@ function wireNode(id, g){
     if(!drag || drag.id !== id) return;
     g.classList.remove('drag');
     document.body.classList.remove('dragging');
-    const quick = Date.now() - drag.t0 < HOLD_MS;
-    const snap = drag.snap, moved = drag.moved;
+    const snap = drag.snap, moved = drag.moved, wantsLink = drag.link;
     drag = null;
     if(moved){ pushUndo(snap); save('tree'); return; }
-    /* Nothing moved, so it was a press rather than a drag: a quick one starts a
-       link from here, holding still for a moment selects the node instead. */
-    if(quick) startNewLink(id);
+    /* Nothing moved, so it was a click: Ctrl held means "start a link from
+       here", otherwise it selects the node for editing. */
+    if(wantsLink) startNewLink(id);
     else selectNode(id);
   };
   g.addEventListener('pointerup', end);
@@ -1117,6 +1115,7 @@ function wireNode(id, g){
     if(mode === 'build') toggle(id);
     else if(awaitFirst){ setAwaitFirst(false); startNewLink(id); }
     else if(pending) attachTo(id);
+    else if(e.ctrlKey || e.metaKey) startNewLink(id);
     else selectNode(id);
   });
   g.addEventListener('mouseenter', ev => {
@@ -1355,8 +1354,7 @@ function addNodeAtCentre(){
 }
 function deleteNode(id){
   if(id === ROOT){ toast('The root node has to stay.'); return; }
-  const n = byId[id];
-  if(inc[id].length && !confirm('Delete "' + n.name + '" and its ' + inc[id].length + ' link(s)?')) return;
+  const n = byId[id], links = inc[id].length;
   pushUndo();
   T.nodes = T.nodes.filter(m => m.id !== id);
   T.edges = T.edges.filter(e => e[0] !== id && e[1] !== id);
@@ -1364,7 +1362,7 @@ function deleteNode(id){
   cancelPending(); setAwaitFirst(false);
   selNode = selEdge = null;
   render(); inspector(); save('tree');
-  toast('Node deleted.');
+  toast('Deleted "' + n.name + '"' + (links ? ' and its ' + links + ' link(s).' : '.') + ' Ctrl+Z undoes it.');
 }
 
 /* ---------------- build mode ---------------- */

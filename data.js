@@ -31,9 +31,6 @@ window.EXORCIST_DATA = {
   /* ---- build rules ---- */
   rules: {
     maxPoints: 30,
-    /* In the editor, a press on a node shorter than this many milliseconds
-       counts as a click (start a link); longer counts as a hold (select/drag). */
-    clickHoldMs: 250,
     /* Tags that grant incantation slot points, and how many each is worth. */
     slotPointTags: { 'inc-n_slot_1point': 1, 'inc-n_slot_2points': 2 }
   },
